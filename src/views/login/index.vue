@@ -14,7 +14,7 @@
           ref="username"
           v-model="loginForm.username"
           placeholder="Username"
-          name="username"
+          name="postUsername"
           type="text"
           tabindex="1"
           autocomplete="on"
@@ -32,7 +32,7 @@
             v-model="loginForm.password"
             :type="passwordType"
             placeholder="Password"
-            name="password"
+            name="postPassword"
             tabindex="2"
             autocomplete="on"
             @keyup.native="checkCapslock"
@@ -45,35 +45,32 @@
         </el-form-item>
       </el-tooltip>
 
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
-
-      <div style="position:relative">
-        <div class="tips">
-          <span>Username : admin</span>
-          <span>Password : any</span>
-        </div>
-        <div class="tips">
-          <span style="margin-right:18px;">Username : editor</span>
-          <span>Password : any</span>
-        </div>
-      </div>
+      <el-form-item prop="code">
+        <span class="svg-container">
+          <svg-icon icon-class="user" />
+        </span>
+        <el-input
+          ref="code"
+          v-model="loginForm.code"
+          style="width:calc(100% - 160px)"
+          placeholder="code"
+          name="captchaCode"
+          type="text"
+          tabindex="1"
+          autocomplete="on"
+        />
+        <div class="code-warper"><img :src="codeImg" class="code-image" alt="服务器异常" @click="getCodeImg();" /></div>
+      </el-form-item>
+      <div>{{login_error}}</div>
+      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">登录</el-button>
     </el-form>
   </div>
 </template>
 
 <script>
-import { validUsername } from '@/utils/validate'
-
 export default {
   name: 'Login',
   data() {
-    const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
-        callback(new Error('Please enter the correct user name'))
-      } else {
-        callback()
-      }
-    }
     const validatePassword = (rule, value, callback) => {
       if (value.length < 6) {
         callback(new Error('The password can not be less than 6 digits'))
@@ -83,11 +80,12 @@ export default {
     }
     return {
       loginForm: {
-        username: 'admin',
-        password: '111111'
+        username: 'super',
+        password: '123456',
+        code: ''
       },
       loginRules: {
-        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
+        username: [{ required: true, trigger: 'blur'}],
         password: [{ required: true, trigger: 'blur', validator: validatePassword }]
       },
       passwordType: 'password',
@@ -95,7 +93,10 @@ export default {
       loading: false,
       showDialog: false,
       redirect: undefined,
-      otherQuery: {}
+      otherQuery: {},
+      codeImg: '', // 图片地址
+      key: '', // token 还是啥
+      login_error: "",
     }
   },
   watch: {
@@ -111,7 +112,7 @@ export default {
     }
   },
   created() {
-    // window.addEventListener('storage', this.afterQRScan)
+    this.getCodeImg();
   },
   mounted() {
     if (this.loginForm.username === '') {
@@ -124,6 +125,10 @@ export default {
     // window.removeEventListener('storage', this.afterQRScan)
   },
   methods: {
+    // 登录获取 图片
+    getCodeImg() {
+      this.codeImg = 'http://localhost:8087/api/v1/login/captchaCode?' + Date.parse(new Date())
+    },
     checkCapslock({ shiftKey, key } = {}) {
       if (key && key.length === 1) {
         if (shiftKey && (key >= 'a' && key <= 'z') || !shiftKey && (key >= 'A' && key <= 'Z')) {
@@ -152,10 +157,12 @@ export default {
           this.loading = true
           this.$store.dispatch('user/login', this.loginForm)
             .then(() => {
+              console.log("成功")
               this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
               this.loading = false
             })
             .catch(() => {
+              console.log("失败")
               this.loading = false
             })
         } else {
@@ -163,6 +170,34 @@ export default {
           return false
         }
       })
+
+      // axios.get('login/api/v1/login/generate/param', {
+      //   params: {},
+      //   headers: {
+      //     'Authorization': ''
+      //   }
+      // }).then(res => {
+      //   this.key = res.data
+      //   let code = this.loginForm.code;
+
+      //   axios.post("login/api/v1/ubc/login", {
+      //     postUsername: this.encryptByDES(this.loginForm.username, ''),
+      //     postPassword: this.encryptByDES(this.loginForm.password, ''),
+      //     captchaCode: code
+      //   },
+      //   {
+      //       headers: {
+      //         'Authorization': ''
+      //       }
+      //   }).then(res=>{
+      //       console.log("操作成功");
+      //       this.$store.dispatch('user/login', this.loginForm)
+      //   })
+
+      // })
+      // .catch(err => {
+      //   console.log('err:', err)
+      // })
     },
     getOtherQuery(query) {
       return Object.keys(query).reduce((acc, cur) => {
@@ -171,33 +206,12 @@ export default {
         }
         return acc
       }, {})
-    }
-    // afterQRScan() {
-    //   if (e.key === 'x-admin-oauth-code') {
-    //     const code = getQueryObject(e.newValue)
-    //     const codeMap = {
-    //       wechat: 'code',
-    //       tencent: 'code'
-    //     }
-    //     const type = codeMap[this.auth_type]
-    //     const codeName = code[type]
-    //     if (codeName) {
-    //       this.$store.dispatch('LoginByThirdparty', codeName).then(() => {
-    //         this.$router.push({ path: this.redirect || '/' })
-    //       })
-    //     } else {
-    //       alert('第三方登录失败')
-    //     }
-    //   }
-    // }
+    },
   }
 }
 </script>
 
 <style lang="scss">
-/* 修复input 背景不协调 和光标变色 */
-/* Detail see https://github.com/PanJiaChen/vue-element-admin/pull/927 */
-
 $bg:#283443;
 $light_gray:#fff;
 $cursor: #fff;
@@ -313,6 +327,22 @@ $light_gray:#eee;
     .thirdparty-button {
       display: none;
     }
+  }
+
+  // 增加二维码
+  .code-warper{
+    position: absolute;
+    right: 0;
+    bottom: 0%;
+    width: 150px;
+    height: 48px;
+    border-left:1px solid rgba(255,255,255,0.1);
+  }
+
+  .code-warper .code-image{
+    padding: 5px;
+    width: 150px;
+    height: 48px;
   }
 }
 </style>

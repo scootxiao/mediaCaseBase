@@ -1,10 +1,16 @@
 import request from '@/utils/request'
+import { encryptByDES } from '@/utils/DES.js'
 
 export function login(data) {
+  console.log(data)
   return request({
-    url: '/user/login',
+    url: 'login/api/v1/ubc/login',
     method: 'post',
-    data
+    params: {
+      postUsername: encryptByDES(data.username, ''),
+      postPassword: encryptByDES(data.password, ''),
+      captchaCode: data.code
+    }
   })
 }
 
