@@ -1,16 +1,21 @@
-import { login, logout, getInfo } from '@/api/user'
+import { login, logout, getInfo, getKey } from '@/api/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
 const state = {
   token: getToken(),
   name: '',
+  key: '',
   avatar: '',
   introduction: '',
   roles: []
 }
 
 const mutations = {
+  SET_KEY: (state, KEY) => {
+    state.KEY = KEY
+    console.log(state.KEY)
+  },
   SET_TOKEN: (state, token) => {
     state.token = token
   },
@@ -29,14 +34,30 @@ const mutations = {
 }
 
 const actions = {
+
+  // ubs获取key
+  getKey({ commit, state }) {
+    return new Promise((resolve, reject) => {
+      getKey({}).then(response => {
+        console.log('response:', response.data)
+        commit('SET_KEY', response.data)
+        resolve()
+      }).catch(error => {
+        reject(error)
+      })
+    })
+  },
+
   // user login
   login({ commit }, userInfo) {
-    const { username, password } = userInfo
+    const { username, password, code, key } = userInfo
+    console.log('userInfo:', userInfo, 'key:', key)
     return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password }).then(response => {
+      login({ username: username.trim(), password: password, code: code.trim(), key: key }).then(response => {
         const { data } = response
-        commit('SET_TOKEN', data.token)
-        setToken(data.token)
+        console.log('response:', response, data)
+        // commit('SET_TOKEN', data.token)
+        // setToken(data.token)
         resolve()
       }).catch(error => {
         reject(error)

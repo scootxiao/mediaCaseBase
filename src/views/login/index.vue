@@ -68,6 +68,12 @@
 </template>
 
 <script>
+import store from '@/store'
+
+import axios from 'axios'
+axios.defaults.headers.Authorization=''
+axios.defaults.withCredentials=true
+
 export default {
   name: 'Login',
   data() {
@@ -111,18 +117,14 @@ export default {
       immediate: true
     }
   },
-  created() {
-    this.getCodeImg();
-  },
   mounted() {
     if (this.loginForm.username === '') {
       this.$refs.username.focus()
     } else if (this.loginForm.password === '') {
       this.$refs.password.focus()
     }
-  },
-  destroyed() {
-    // window.removeEventListener('storage', this.afterQRScan)
+
+    this.getCodeImg();
   },
   methods: {
     // 登录获取 图片
@@ -155,49 +157,42 @@ export default {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('user/login', this.loginForm)
-            .then(() => {
-              console.log("成功")
-              this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
-              this.loading = false
-            })
-            .catch(() => {
-              console.log("失败")
-              this.loading = false
-            })
+          
+          // this.$store.dispatch('user/getKey')
+          //   .then(()=>{
+          //     console.log("getKey成功",store.getters.key)
+          //   })
+
+
+          // this.$store.dispatch('user/login', this.loginForm)
+          //   .then(() => {
+          //     console.log("成功")
+          //     this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
+          //     this.loading = false
+          //   })
+          //   .catch(() => {
+          //     console.log("失败")
+          //     this.loading = false
+          //   })
+
+          axios.get('http://localhost:8087/api/v1/login/generate/param' + '?' + Date.parse(new Date()), {
+            params: {},
+            headers: {
+              'Authorization': ''
+            }
+          }).then(res=>{
+            this.key = res.data;
+            this.$store.dispatch('user/login', {...this.loginForm,key: this.key})
+              .then(res=>{
+                console.log("res:",res);
+              })
+          })
+
         } else {
           console.log('error submit!!')
           return false
         }
       })
-
-      // axios.get('login/api/v1/login/generate/param', {
-      //   params: {},
-      //   headers: {
-      //     'Authorization': ''
-      //   }
-      // }).then(res => {
-      //   this.key = res.data
-      //   let code = this.loginForm.code;
-
-      //   axios.post("login/api/v1/ubc/login", {
-      //     postUsername: this.encryptByDES(this.loginForm.username, ''),
-      //     postPassword: this.encryptByDES(this.loginForm.password, ''),
-      //     captchaCode: code
-      //   },
-      //   {
-      //       headers: {
-      //         'Authorization': ''
-      //       }
-      //   }).then(res=>{
-      //       console.log("操作成功");
-      //       this.$store.dispatch('user/login', this.loginForm)
-      //   })
-
-      // })
-      // .catch(err => {
-      //   console.log('err:', err)
-      // })
     },
     getOtherQuery(query) {
       return Object.keys(query).reduce((acc, cur) => {
@@ -206,7 +201,7 @@ export default {
         }
         return acc
       }, {})
-    },
+    }
   }
 }
 </script>

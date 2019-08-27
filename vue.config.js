@@ -48,6 +48,7 @@ module.exports = {
       },
       '/login': {
         target: 'http://localhost:8087',
+        // target: 'http://192.168.3.126:8082',
         // target:'http://114.116.17.234:8080',
         changeOrigin: true,
         ws: true,
