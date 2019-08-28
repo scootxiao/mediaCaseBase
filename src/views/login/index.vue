@@ -59,20 +59,18 @@
           tabindex="1"
           autocomplete="on"
         />
-        <div class="code-warper"><img :src="codeImg" class="code-image" alt="服务器异常" @click="getCodeImg();" /></div>
+        <div class="code-warper"><img :src="codeImg" class="code-image" alt="服务器异常" @click="getCodeImg();"></div>
       </el-form-item>
-      <div>{{login_error}}</div>
+      <div>{{ login_error }}</div>
       <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">登录</el-button>
     </el-form>
   </div>
 </template>
 
 <script>
-import store from '@/store'
-
 import axios from 'axios'
-axios.defaults.headers.Authorization=''
-axios.defaults.withCredentials=true
+axios.defaults.headers.Authorization = ''
+axios.defaults.withCredentials = true
 
 export default {
   name: 'Login',
@@ -91,7 +89,7 @@ export default {
         code: ''
       },
       loginRules: {
-        username: [{ required: true, trigger: 'blur'}],
+        username: [{ required: true, trigger: 'blur' }],
         password: [{ required: true, trigger: 'blur', validator: validatePassword }]
       },
       passwordType: 'password',
@@ -102,7 +100,7 @@ export default {
       otherQuery: {},
       codeImg: '', // 图片地址
       key: '', // token 还是啥
-      login_error: "",
+      login_error: ''
     }
   },
   watch: {
@@ -124,7 +122,7 @@ export default {
       this.$refs.password.focus()
     }
 
-    this.getCodeImg();
+    this.getCodeImg()
   },
   methods: {
     // 登录获取 图片
@@ -154,40 +152,27 @@ export default {
       })
     },
     handleLogin() {
+      this.$store.dispatch('user/logout')
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          
-          // this.$store.dispatch('user/getKey')
-          //   .then(()=>{
-          //     console.log("getKey成功",store.getters.key)
-          //   })
-
-
-          // this.$store.dispatch('user/login', this.loginForm)
-          //   .then(() => {
-          //     console.log("成功")
-          //     this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
-          //     this.loading = false
-          //   })
-          //   .catch(() => {
-          //     console.log("失败")
-          //     this.loading = false
-          //   })
-
           axios.get('http://localhost:8087/api/v1/login/generate/param' + '?' + Date.parse(new Date()), {
             params: {},
             headers: {
               'Authorization': ''
             }
-          }).then(res=>{
-            this.key = res.data;
-            this.$store.dispatch('user/login', {...this.loginForm,key: this.key})
-              .then(res=>{
-                console.log("res:",res);
-              })
           })
-
+            .then(res => {
+              this.key = res.data
+              this.$store.dispatch('user/login', { ...this.loginForm, key: this.key })
+                .then(res => {
+                  console.log('login res:', res, this.redirect, this.otherQuery)
+                  this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
+                })
+                .catch(() => {
+                  console.log('login 失败')
+                })
+            })
         } else {
           console.log('error submit!!')
           return false
@@ -195,12 +180,14 @@ export default {
       })
     },
     getOtherQuery(query) {
-      return Object.keys(query).reduce((acc, cur) => {
+      const value = Object.keys(query).reduce((acc, cur) => {
         if (cur !== 'redirect') {
           acc[cur] = query[cur]
         }
         return acc
       }, {})
+      console.log('---getOtherQuery=> value', value)
+      return value
     }
   }
 }

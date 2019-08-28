@@ -5,13 +5,13 @@ import axios from 'axios'
 axios.defaults.withCredentials = true
 
 export function login(data) {
-  console.log('----data:', data)
   return axios.post('http://localhost:8087/api/v1/ubc/login', {
-    method: 'post',
-    params: {
-      postUsername: encryptByDES(data.username, data.key),
-      postPassword: encryptByDES(data.password, data.key),
-      captchaCode: data.code
+    postUsername: encryptByDES(data.username, data.key),
+    postPassword: encryptByDES(data.password, data.key),
+    captchaCode: data.code
+  }, {
+    headers: {
+      'Authorization': ''
     }
   })
 }
@@ -27,11 +27,18 @@ export function login(data) {
 // }
 
 export function getInfo(token) {
-  return request({
-    url: '/user/info',
-    method: 'get',
-    params: { token }
-  })
+  // return request({
+  //   url: '/user/info',
+  //   method: 'get',
+  //   params: { token }
+  // })
+  console.log('getInfo:', token)
+  return {
+    roles: ['unify_admin'],
+    name: '统一平台 Admin',
+    avatar: 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
+    introduction: 'I am a super administrator'
+  }
 }
 
 export function logout() {
