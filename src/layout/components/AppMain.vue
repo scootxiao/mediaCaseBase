@@ -5,6 +5,7 @@
         <router-view :key="key" />
       </keep-alive>
     </transition>
+    <div class="footer">Copyright © 2012-2017 izhonghong.com All rights Reserved 电话：0755--86102030 传真：0755-862542</div>
   </section>
 </template>
 
@@ -44,6 +45,14 @@ export default {
   .fixed-header+.app-main {
     padding-top: 84px;
   }
+}
+
+.footer{
+  padding:5px 20px;
+  background-color: #f0f0f0;
+  font-size: 14px;
+  color: #111;
+  text-align: center;
 }
 </style>
 

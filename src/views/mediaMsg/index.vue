@@ -2,19 +2,20 @@
   <div class="app-container">
     <div class="filter-container">
       <el-form :inline="true" :model="formData">
-        <el-form-item label="">
-          <el-input
-            v-model.trim="formData.personName"
-            placeholder="请输入媒体人姓名关键字"
-            maxlength="20"
-          />
-        </el-form-item>
-        <media-selector
+        <el-input
+          v-model.trim="formData.personName"
+          placeholder="媒体人姓名关键字"
+          maxlength="20"
+          class="filter-item"
+          style="width:180px;"
+        />
+        <!-- <media-selector
           @store-change="storeChange"
           @type-change="typeChange"
           @media-change="mediaChange"
           @block-change="blockChange"
-        />
+        /> -->
+        <media-selector></media-selector>
         <media-position
           :label="'媒体位置：'"
           :position-range="this.formData.positionRange"
@@ -22,94 +23,94 @@
           @parent-change="parentChange"
           @position-change="positionChange"
         />
-        <el-button type="primary" icon="search" @click="getMediaPersonList">查询</el-button>
+        <el-button type="primary" class="filter-item" icon="search" @click="getMediaPersonList">查询</el-button>
+        <el-button type="primary" class="filter-item" style="margin-left:30px;" @click="toCreate">新建</el-button>
+        <el-button type="primary" class="filter-item" @click="showExportDialog">导出</el-button>
+        <el-button type="primary" class="filter-item" @click="deleteByIds">删除</el-button>
       </el-form>
     </div>
-    <div class="table-content">
-      <el-table ref="singleTable" border :data="tableData" style="width: 100%" @selection-change="selectionChange">
-        <el-table-column type="selection" align="center" width="50" fixed />
-        <el-table-column property="mediaType" align="center" label="媒体类型" />
-        <el-table-column
-          property="storey"
-          align="center"
-          label="媒体层级"
-          sortable
-          show-overflow-tooltip
-        />
-        <el-table-column
-          property="positionParentName"
-          align="center"
-          label="省/国家"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          property="positionName"
-          align="center"
-          label="市"
-          show-overflow-tooltip
-        />
-        <el-table-column property="mediaName" align="center" label="媒体" show-overflow-tooltip />
-        <el-table-column
-          property="mediaBlockName"
-          align="center"
-          label="板块"
-          show-overflow-tooltip
-        >
-          <template slot-scope="scope">{{ (scope.row.mediaBlockName || '-- -- -- --').replace(/,/g, "，") }}</template>
-        </el-table-column>
-        <el-table-column
-          property="name"
-          align="center"
-          label="媒体人"
-          sortable
-          show-overflow-tooltip
-        >
-          <template slot-scope="scope">
-            <span>{{ scope.row.name }}</span>
-            <span class="relation" :class="scope.row.relation == 1 ? 'relation-red' : 'relation-yellow'">
-              {{ scope.row.relation == 1 ? '密切' : '一般' }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          property="job"
-          align="center"
-          label="媒体人职务"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          property="phone"
-          align="center"
-          label="手机号码"
-          width="180px"
-          show-overflow-tooltip
-        >
-          <template slot-scope="scope">
-            <span>
-              <span v-text="scope.row.phone" />
-              <i class="el-icon-view" style="cursor: pointer; margin-left: 1em;" @click="togglePhone(scope.$index)" />
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" align="center" width="180px">
-          <template slot-scope="scope">
-            <el-button size="small" type="primary" plain @click="handleView(scope.row)">查看</el-button>
-            <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-    <div class="common-btns">
-      <el-pagination
-        :current-page="pagination.currentPage"
-        :page-size="pagination.pageSize"
-        layout="total, prev, pager, next,jumper"
-        :total="pagination.peopleCount"
-        @size-change="paginationSizeChange"
-        @current-change="paginationCurrentChange"
+    <el-table
+      ref="singleTable"
+      highlight-current-row
+      style="width: 100%;"
+      :data="tableData"
+      @selection-change="selectionChange"
+    >
+      <el-table-column type="selection" align="center" width="50" fixed />
+      <el-table-column
+        property="storey"
+        align="center"
+        label="媒体层级"
+        sortable
+        width="120px"
+        show-overflow-tooltip
       />
-    </div>
-    <el-dialog title="导出验证" :visible.sync="exportDialog.show" width="40%">
+      <el-table-column property="mediaType" align="left" label="媒体类型 > 媒体 > 板块" show-overflow-tooltip>
+        <template slot-scope="scope">
+          {{ scope.row.mediaType }} >
+          {{ scope.row.mediaName }} >
+          {{ (scope.row.mediaBlockName || '未知').replace(/,/g, "，") }}
+        </template>
+      </el-table-column>
+      <el-table-column property="mediaType" align="left" label="省/国家 > 市" show-overflow-tooltip>
+        <template slot-scope="scope">
+          {{ scope.row.positionParentName }} >
+          {{ scope.row.positionName }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        property="name"
+        align="center"
+        label="媒体人"
+        sortable
+        width="120"
+        show-overflow-tooltip
+      >
+        <template slot-scope="scope">
+          {{ scope.row.name }}
+        </template>
+      </el-table-column>
+
+      <el-table-column label="亲密性" align="center" width="100px">
+        <template slot-scope="scope">
+          <svg-icon icon-class="star" class="meta-item__icon" />
+          <svg-icon v-if="scope.row.relation == 1" icon-class="star" class="meta-item__icon" />
+          <svg-icon v-if="scope.row.relation == 1" icon-class="star" class="meta-item__icon" />
+        </template>
+      </el-table-column>
+      <el-table-column
+        property="job"
+        align="center"
+        label="媒体人职务"
+        width="100px"
+        show-overflow-tooltip
+      />
+      <el-table-column
+        property="phone"
+        align="center"
+        label="手机号码"
+        width="150px"
+        show-overflow-tooltip
+      >
+        <template slot-scope="scope">
+          <span>
+            <span v-text="scope.row.phone" />
+            <i class="el-icon-view" style="cursor: pointer; margin-left: 1em;" @click="togglePhone(scope.$index)" />
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" width="180px">
+        <template slot-scope="scope">
+          <el-button size="mini" type="primary" @click="handleEdit(scope.row)">编辑</el-button>
+          <el-button size="mini" type="success" @click="handleView(scope.row)">查看</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- pege 表示当前第几页 total是总数 limit是每页显示多少条 getList是数据请求回调 -->
+    <pagination v-show="pagination.peopleCount>0" :total="pagination.peopleCount" :page.sync="pagination.currentPage" :limit.sync="pagination.pageSize" @pagination="getMediaPersonList" />
+
+    <!-- <el-dialog title="导出验证" :visible.sync="exportDialog.show" width="40%">
       <el-form label-width="30%" :model="exportDialog">
         <el-form-item label="操作人：">{{ exportDialog.name }}</el-form-item>
         <el-form-item label="手机验证码：" style="width: 100%">
@@ -126,22 +127,25 @@
         <el-button type="primary" @click="exportExcel">确 定</el-button>
         <el-button style="margin-left: 2em;" @click="exportDialog.show = false">取 消</el-button>
       </div>
-    </el-dialog>
+    </el-dialog> -->
   </div>
 </template>
 
 <script>
-import axios from 'axios'
 import MediaAPI from '@/api/mediaSettings'
 import AreaInfoAPI from '@/api/areaInfo'
 import UserAPI from '@/api/user.js'
+import { getMediaPersonList, delRow } from '@/api/mediaMsg'
+
 import WaterMask from '@/utils/waterMask'
+import FileUtil from '@/utils/file.js'
+
 import mediaPosition from '@/components/media/mediaPosition'
 import mediaSelector from '@/components/media/mediaSelector'
-import FileUtil from '@/utils/file.js'
+import Pagination from '@/components/Pagination'
 export default {
   name: 'MediaMsg',
-  components: { mediaPosition, mediaSelector },
+  components: { mediaPosition, mediaSelector, Pagination },
   data() {
     return {
       formData: {
@@ -168,15 +172,15 @@ export default {
       positionOptions: [],
       tableData: [],
       selection: [],
-      exportDialog: {
-        show: false,
-        verifyCode: '',
-        timer: null,
-        canGetCode: true,
-        name: '',
-        getCodeBtnText: '获取验证码',
-        phone: ''
-      },
+      // exportDialog: {
+      //   show: false,
+      //   verifyCode: '',
+      //   timer: null,
+      //   canGetCode: true,
+      //   name: '',
+      //   getCodeBtnText: '获取验证码',
+      //   phone: ''
+      // },
       userInfo: null
     }
   },
@@ -185,40 +189,37 @@ export default {
     this.getMediaPersonList()
   },
   mounted() {
-
   },
   methods: {
-    paginationSizeChange(value) {
-      this.pagination.pageSize = value
-      this.getMediaPersonList()
-    },
-    paginationCurrentChange(value) {
-      this.pagination.currentPage = value
-      this.getMediaPersonList()
-    },
     handleView(value) {
-      const router = this.$router.resolve({
-        path: '/personLibraryCheck',
-        query: {
-          id: value.id
-        }
-      })
-      window.open(router.href, '_blank')
+      // const router = this.$router.resolve({
+      //   path: '/personLibraryCheck',
+      //   query: {
+      //     id: value.id
+      //   }
+      // })
+      // window.open(router.href, '_blank')
     },
     handleEdit(value) {
-      const router = this.$router.resolve({
-        path: '/personLibraryCreate',
-        query: {
-          id: value.id
-        }
+      // const router = this.$router.resolve({
+      //   path: '/mediaMsg/create',
+      //   query: {
+      //     id: value.id
+      //   }
+      // })
+      // window.open(router.href, '_blank')
+      this.$router.push({
+        path: '/mediaMsg/create'
       })
-      window.open(router.href, '_blank')
     },
     toCreate() {
-      const router = this.$router.resolve({
-        path: '/personLibraryCreate'
+      // const router = this.$router.resolve({
+      //   path: '/mediaMsg/create'
+      // })
+      // window.open(router.href, '_blank')
+      this.$router.push({
+        path: '/mediaMsg/create'
       })
-      window.open(router.href, '_blank')
     },
     storeChange(store) {
       this.formData.storey = store
@@ -250,20 +251,15 @@ export default {
       this.selection = selection
     },
     getMediaPersonList() {
+      this.showLoading('加载中，请稍候...')
       Object.assign(this.formData, {
         current: this.pagination.currentPage,
         size: this.pagination.pageSize
       })
-      this.showLoading('加载中，请稍候...')
-      axios.post('/media_repository/mediaPerson/selectPage', this.formData).then(res => {
-        this.loading.close()
-        if (res.data.code == '0') {
-          this.tableData = res.data.data.records
-          this.pagination.peopleCount = res.data.data.total
-        } else {
-          this.$message.error(res.data.msg)
-        }
-      }).catch(err => {
+      getMediaPersonList(this.formData).then(res => {
+        const { data } = res
+        this.tableData = data.records
+        this.pagination.peopleCount = data.total
         this.loading.close()
       })
     },
@@ -275,26 +271,21 @@ export default {
         this.tableData[index].phone = this.tableData[index].realPhone
       }
     },
-    async deleteByIds() {
-      const ids = (this.selection || []).map(item => item.id).join(',')
-      if (!ids) {
-        this.$message.warning('需选择删除项')
-        return
-      }
-      await this.$confirm('您确定要删除勾选的数据吗？')
-      this.showLoading('处理中，请稍候...')
-      axios.get(`/media_repository/mediaPerson/deleteByIds?ids=${ids}`).then(res => {
-        this.loading.close()
-        if (res.data.code == '0') {
-          this.$message.success('删除成功')
-          this.getMediaPersonList()
-        } else {
-          this.$message.error(res.data.msg)
-        }
-      }).catch(err => {
-        this.loading.close()
-      })
-    },
+    // async deleteByIds() {
+    //   const ids = (this.selection || []).map(item => item.id).join(',')
+    //   if (!ids) {
+    //     this.$message.warning('需选择删除项')
+    //     return
+    //   }
+    //   await this.$confirm('您确定要删除勾选的数据吗？')
+    //   this.showLoading('处理中，请稍候...')
+    //   delRow(ids)
+    //     .then(res=>{
+    //       this.$message.success('删除成功')
+    //       this.getMediaPersonList()
+    //     })
+    //   this.loading.close()
+    // },
     showLoading(tips) {
       this.loading = this.$loading({
         lock: true,
@@ -305,92 +296,71 @@ export default {
     },
     toAllLibrary() {
       this.$router.push({
-        path: '/allLibrary'
-      })
-    },
-    showExportDialog() {
-      this.exportDialog.show = true
-      if (!this.userInfo) {
-        UserAPI.getLoginUserInfo().then(res => {
-          this.userInfo = res.data
-          this.exportDialog.name = this.userInfo.username
-          this.exportDialog.phone = (this.userInfo.phone || '').replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
-        })
-      }
-    },
-    getVerifyCode() {
-      this.exportDialog.canGetCode = false
-      axios.get(`/media_repository/common/query/getPhoneVerifyCode?phone=${this.userInfo.phone}&template=1`).then(res => {
-        if (res.data.code == '0') {
-          this.exportDialog.getCodeBtnText = '重新获取(60s)'
-          this.exportDialog.timer = setInterval(() => {
-            let num = (this.exportDialog.getCodeBtnText || '0').replace(/\D+/g, '')
-            num -= 1
-            if (num < 1) {
-              clearInterval(this.exportDialog.timer)
-              this.exportDialog.canGetCode = true
-              this.exportDialog.getCodeBtnText = '点击获取'
-            } else {
-              this.exportDialog.getCodeBtnText = `重新获取(${num}s)`
-            }
-          }, 1000)
-        } else {
-          this.$message.error(res.data.msg)
-          this.exportDialog.canGetCode = true
-        }
-      }).catch(err => {
-        this.exportDialog.canGetCode = true
-      })
-    },
-    exportExcel() {
-      if (!/^\d{6}$/.test(this.exportDialog.verifyCode)) {
-        this.$message.warning('请输入6位数字的验证码')
-        return
-      }
-      this.showLoading('处理中，请稍候...')
-      const data = Object.assign(this.formData, {
-        current: 1,
-        size: 5000,
-        verifyCode: this.exportDialog.verifyCode
-      })
-      axios({
-        method: 'post',
-        url: '/media_repository/mediaPerson/export',
-        data,
-        processData: false,
-        responseType: 'blob'
-      }).then(res => {
-        this.loading.close()
-        FileUtil.downLoadFromResponse(res, () => {
-          this.exportDialog.show = false
-        }, text => {
-          this.$message.error(JSON.parse(text).msg)
-        })
-      }).catch(err => {
-        this.loading.close()
+        path: '/mediaMsg/all'
       })
     }
+    // showExportDialog() {
+    //   this.exportDialog.show = true
+    //   if (!this.userInfo) {
+    //     UserAPI.getLoginUserInfo().then(res => {
+    //       this.userInfo = res.data
+    //       this.exportDialog.name = this.userInfo.username
+    //       this.exportDialog.phone = (this.userInfo.phone || '').replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
+    //     })
+    //   }
+    // },
+    // getVerifyCode() {
+    //   this.exportDialog.canGetCode = false
+    //   axios.get(`/media_repository/common/query/getPhoneVerifyCode?phone=${this.userInfo.phone}&template=1`).then(res => {
+    //     if (res.data.code == '0') {
+    //       this.exportDialog.getCodeBtnText = '重新获取(60s)'
+    //       this.exportDialog.timer = setInterval(() => {
+    //         let num = (this.exportDialog.getCodeBtnText || '0').replace(/\D+/g, '')
+    //         num -= 1
+    //         if (num < 1) {
+    //           clearInterval(this.exportDialog.timer)
+    //           this.exportDialog.canGetCode = true
+    //           this.exportDialog.getCodeBtnText = '点击获取'
+    //         } else {
+    //           this.exportDialog.getCodeBtnText = `重新获取(${num}s)`
+    //         }
+    //       }, 1000)
+    //     } else {
+    //       this.$message.error(res.data.msg)
+    //       this.exportDialog.canGetCode = true
+    //     }
+    //   }).catch(err => {
+    //     this.exportDialog.canGetCode = true
+    //   })
+    // },
+    // exportExcel() {
+    //   if (!/^\d{6}$/.test(this.exportDialog.verifyCode)) {
+    //     this.$message.warning('请输入6位数字的验证码')
+    //     return
+    //   }
+    //   this.showLoading('处理中，请稍候...')
+    //   const data = Object.assign(this.formData, {
+    //     current: 1,
+    //     size: 5000,
+    //     verifyCode: this.exportDialog.verifyCode
+    //   })
+    //   axios({
+    //     method: 'post',
+    //     url: '/media_repository/mediaPerson/export',
+    //     data,
+    //     processData: false,
+    //     responseType: 'blob'
+    //   }).then(res => {
+    //     this.loading.close()
+    //     FileUtil.downLoadFromResponse(res, () => {
+    //       this.exportDialog.show = false
+    //     }, text => {
+    //       this.$message.error(JSON.parse(text).msg)
+    //     })
+    //   }).catch(err => {
+    //     this.loading.close()
+    //   })
+    // }
   }
 }
 </script>
-
-<style scoped>
-    .relation {
-        position: absolute;
-        right: 0;
-        top:0;
-        border: 2px solid #aaa;
-        font-size: smaller;
-        font-weight: bold;
-        padding: 2px;
-        line-height: 1em;
-    }
-    .relation-red {
-        border-color: red;
-        color: red;
-    }
-    .relation-yellow {
-        border-color: #fc0;
-        color: #fc0;
-    }
-</style>

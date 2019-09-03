@@ -1,12 +1,5 @@
 <template>
-  <div>
-    <div class="crumbs">
-      <el-breadcrumb separator="-">
-        <el-breadcrumb-item><i class="iconfont icon-shouye" /> 媒体信息</el-breadcrumb-item>
-        <el-breadcrumb-item>个人库</el-breadcrumb-item>
-        <el-breadcrumb-item>新建</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
+  <div class="app-container">
     <div class="container">
       <div class="hd">
         <i class="el-icon-menu" /> 媒体人信息
@@ -23,14 +16,6 @@
             <el-option v-for="m in mediaTypeOptions" :key="m.value" :label="m.name" :value="parseInt(m.value)" />
           </el-select>
         </el-form-item>
-        <!--<el-form-item label="媒体层级：" required="">
-                    <el-select v-model="formData.storey" style="width:100%;" @change="getMediaOptions" clearable>
-                        <el-option v-for="m in mediaStoreOptions" :label="m.name" :value="m.value" :key="m.value"></el-option>
-                    </el-select>
-                </el-form-item>
-                <media-position :label="'媒体位置：'" :positionRange="formData.positionRange" @range-change="rangeChange"
-                        :required="true"  @parent-change="parentChange" @position-change="positionChange"
-                        :selectStyle="'width:calc(33% - 2px)'"></media-position>-->
         <el-form-item label="媒体：" required="">
           <el-select v-model="formData.mediaId" style="width:100%;" placeholder="请选择媒体" filterable @change="getMediaBlockOptions">
             <el-option v-for="m in mediaOptions" :key="m.id" :label="m.name" :value="m.id" />
@@ -140,14 +125,14 @@
 
 <script>
 import MediaAPI from '@/api/mediaSettings'
-import mediaPosition from '@/components/page/mediaPosition.vue'
+// import mediaPosition from '@/components/media/mediaPosition.vue'
 import UserAPI from '@/api/user'
 import axios from 'axios'
-import deptUserTree from '@/components/page/deptUserTree.vue'
-import DeptUserTree from '../../deptUserTree'
+// import deptUserTree from '@/components/media/deptUserTree.vue'
+// import DeptUserTree from '../../deptUserTree'
 export default {
   name: 'MediaMsg',
-  components: { DeptUserTree, mediaPosition },
+  // components: { DeptUserTree, mediaPosition },
   data() {
     return {
       formData: {
@@ -214,159 +199,159 @@ export default {
     }
   },
   watch: {
-    filterText(val) {
-      this.$refs.tree2.filter(val)
-    },
-    'formData.chargeBy': function(val) {
-      const index = this.userList.findIndex(item => item.id == val)
-      if (index == -1) {
-        this.$message.warning('未找到该用户')
-        return
-      }
-      const user = this.userList[index]
-      this.formData.chargeByPosition = user.position
-      this.formData.chargeByName = user.username
-      const deptid = user.orgid
-      if (!deptid) {
-        this.formData.chargeByDeptName = '用户部门ID为空'
-        return
-      }
-      this.formData.chargeByDeptId = deptid
-      UserAPI.getUserDeptInfo(deptid).then(res => {
-        this.formData.chargeByDeptName = res.data.org_name
-      }).catch(err => {
-        this.formData.chargeByDeptName = '获取部门信息失败'
-      })
-    }
-  },
-  async created() {
-    const data = await UserAPI.getDeptUserTree()
-    this.userTree = data.data
-    this.getMediaOptions()
-    this.initFormData()
-  },
-  methods: {
-    filterNode(value, data) {
-      if (!value) return true
-      return data.label.indexOf(value) !== -1
-    },
-    getMediaOptions() {
-      this.formData.mediaId = ''
-      this.mediaBlockIds = []
-      this.mediaBlockOptions = []
-      MediaAPI.mediaPager({
-        storey: this.formData.storey,
-        media_type: this.formData.mediaType,
-        position_range: this.formData.positionRange,
-        position_parent_id: this.formData.positionParentId,
-        position_id: this.formData.positionId,
-        size: 10086
-      }).then(res => {
-        this.mediaOptions = res.data.records
-      })
-    },
-    getMediaBlockOptions() {
-      this.mediaBlockIds = []
-      MediaAPI.mediaBlockPager({
-        media_id: this.formData.mediaId,
-        size: 10086
-      }).then(res => {
-        this.mediaBlockOptions = res.data.records
-      })
-    },
-    rangeChange(range) {
-      this.formData.positionRange = range
-      this.formData.positionParentId = ''
-      this.formData.positionId = ''
-      this.getMediaOptions()
-    },
-    parentChange(parentId) {
-      this.formData.positionParentId = parentId
-      this.formData.positionId = ''
-      this.getMediaOptions()
-    },
-    positionChange(positionId) {
-      this.formData.positionId = positionId
-      this.getMediaOptions()
-    },
-    onlyNumber(column) {
-      this.formData[column] = (this.formData[column] || '').replace(/\D+/g, '')
-    },
-    notSpace(column) {
-      this.formData[column] = (this.formData[column] || '').replace(/\s+/g, '')
-    },
-    cancel() {
-      window.close()
-    },
-    initFormData() {
-      if (!this.$route.query.id) {
-        UserAPI.getLoginUserInfo().then(res => {
-          const user = res.data
-          this.formData.chargeBy = user.id
-        })
-      } else {
-        this.showLoading('加载中，请稍候...')
-        axios.get(`/media_repository/mediaPerson/selectById/${this.$route.query.id}`).then(res => {
-          this.loading.close()
-          this.formData = res.data.data.person
-          this.otherChargers = res.data.data.otherChargers.map(item => item.userId)
-          this.getMediaBlockOptions()
-          this.getMediaInfo(this.formData.id)
-        }).catch(err => {
-          this.loading.close()
-        })
-      }
-    },
-    getMediaInfo(personId) {
-      if (!personId) {
-        return
-      }
-      axios.get(`/media_repository/mediaPerson/selectMediaInfoByPersonId/${personId}`).then(res => {
-        this.mediaBlockIds = res.data.data.mediaBlockInfos.map(item => item.id)
-      })
-    },
-    showPrincipalDialog() {
-      this.principalDialog.show = true
-    },
-    async saveOrUpdate() {
-      await this.$confirm('您确定要保存修改吗？')
-      const otherChargers = []
-      this.otherChargers.forEach(id => {
-        const index = this.userList.findIndex(item => item.id == id)
-        otherChargers.push({
-          userId: id,
-          userName: (this.userList[index] || {}).username
-        })
-      })
-      const personBlocks = []
-      this.mediaBlockIds.forEach(mediaBlockId => {
-        personBlocks.push({ mediaBlockId })
-      })
-      this.showLoading('处理中，请稍候...')
-      axios.post('/media_repository/mediaPerson/saveOrUpdate', {
-        person: this.formData,
-        otherChargers,
-        personBlocks
-      }).then(res => {
-        this.loading.close()
-        if (res.data.code == '0') {
-          this.$message.success('保存成功')
-          setTimeout(this.cancel, 3000)
-        } else {
-          this.$message.error(res.data.msg)
-        }
-      }).catch(err => {
-        this.loading.close()
-      })
-    },
-    showLoading(tips) {
-      this.loading = this.$loading({
-        lock: true,
-        text: tips,
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
-    }
+  //   filterText(val) {
+  //     this.$refs.tree2.filter(val)
+  //   },
+  //   'formData.chargeBy': function(val) {
+  //     const index = this.userList.findIndex(item => item.id == val)
+  //     if (index == -1) {
+  //       this.$message.warning('未找到该用户')
+  //       return
+  //     }
+  //     const user = this.userList[index]
+  //     this.formData.chargeByPosition = user.position
+  //     this.formData.chargeByName = user.username
+  //     const deptid = user.orgid
+  //     if (!deptid) {
+  //       this.formData.chargeByDeptName = '用户部门ID为空'
+  //       return
+  //     }
+  //     this.formData.chargeByDeptId = deptid
+  //     UserAPI.getUserDeptInfo(deptid).then(res => {
+  //       this.formData.chargeByDeptName = res.data.org_name
+  //     }).catch(err => {
+  //       this.formData.chargeByDeptName = '获取部门信息失败'
+  //     })
+  //   }
+  // },
+  // async created() {
+  //   // const data = await UserAPI.getDeptUserTree()
+  //   // this.userTree = data.data
+  //   // this.getMediaOptions()
+  //   // this.initFormData()
+  // },
+  // methods: {
+  //   filterNode(value, data) {
+  //     if (!value) return true
+  //     return data.label.indexOf(value) !== -1
+  //   },
+  //   getMediaOptions() {
+  //     this.formData.mediaId = ''
+  //     this.mediaBlockIds = []
+  //     this.mediaBlockOptions = []
+  //     MediaAPI.mediaPager({
+  //       storey: this.formData.storey,
+  //       media_type: this.formData.mediaType,
+  //       position_range: this.formData.positionRange,
+  //       position_parent_id: this.formData.positionParentId,
+  //       position_id: this.formData.positionId,
+  //       size: 10086
+  //     }).then(res => {
+  //       this.mediaOptions = res.data.records
+  //     })
+  //   },
+  //   getMediaBlockOptions() {
+  //     this.mediaBlockIds = []
+  //     MediaAPI.mediaBlockPager({
+  //       media_id: this.formData.mediaId,
+  //       size: 10086
+  //     }).then(res => {
+  //       this.mediaBlockOptions = res.data.records
+  //     })
+  //   },
+  //   rangeChange(range) {
+  //     this.formData.positionRange = range
+  //     this.formData.positionParentId = ''
+  //     this.formData.positionId = ''
+  //     this.getMediaOptions()
+  //   },
+  //   parentChange(parentId) {
+  //     this.formData.positionParentId = parentId
+  //     this.formData.positionId = ''
+  //     this.getMediaOptions()
+  //   },
+  //   positionChange(positionId) {
+  //     this.formData.positionId = positionId
+  //     this.getMediaOptions()
+  //   },
+  //   onlyNumber(column) {
+  //     this.formData[column] = (this.formData[column] || '').replace(/\D+/g, '')
+  //   },
+  //   notSpace(column) {
+  //     this.formData[column] = (this.formData[column] || '').replace(/\s+/g, '')
+  //   },
+  //   cancel() {
+  //     window.close()
+  //   },
+  //   initFormData() {
+  //     if (!this.$route.query.id) {
+  //       UserAPI.getLoginUserInfo().then(res => {
+  //         const user = res.data
+  //         this.formData.chargeBy = user.id
+  //       })
+  //     } else {
+  //       this.showLoading('加载中，请稍候...')
+  //       axios.get(`/media_repository/mediaPerson/selectById/${this.$route.query.id}`).then(res => {
+  //         this.loading.close()
+  //         this.formData = res.data.data.person
+  //         this.otherChargers = res.data.data.otherChargers.map(item => item.userId)
+  //         this.getMediaBlockOptions()
+  //         this.getMediaInfo(this.formData.id)
+  //       }).catch(err => {
+  //         this.loading.close()
+  //       })
+  //     }
+  //   },
+  //   getMediaInfo(personId) {
+  //     if (!personId) {
+  //       return
+  //     }
+  //     axios.get(`/media_repository/mediaPerson/selectMediaInfoByPersonId/${personId}`).then(res => {
+  //       this.mediaBlockIds = res.data.data.mediaBlockInfos.map(item => item.id)
+  //     })
+  //   },
+  //   showPrincipalDialog() {
+  //     this.principalDialog.show = true
+  //   },
+  //   async saveOrUpdate() {
+  //     await this.$confirm('您确定要保存修改吗？')
+  //     const otherChargers = []
+  //     this.otherChargers.forEach(id => {
+  //       const index = this.userList.findIndex(item => item.id == id)
+  //       otherChargers.push({
+  //         userId: id,
+  //         userName: (this.userList[index] || {}).username
+  //       })
+  //     })
+  //     const personBlocks = []
+  //     this.mediaBlockIds.forEach(mediaBlockId => {
+  //       personBlocks.push({ mediaBlockId })
+  //     })
+  //     this.showLoading('处理中，请稍候...')
+  //     axios.post('/media_repository/mediaPerson/saveOrUpdate', {
+  //       person: this.formData,
+  //       otherChargers,
+  //       personBlocks
+  //     }).then(res => {
+  //       this.loading.close()
+  //       if (res.data.code == '0') {
+  //         this.$message.success('保存成功')
+  //         setTimeout(this.cancel, 3000)
+  //       } else {
+  //         this.$message.error(res.data.msg)
+  //       }
+  //     }).catch(err => {
+  //       this.loading.close()
+  //     })
+  //   },
+  //   showLoading(tips) {
+  //     this.loading = this.$loading({
+  //       lock: true,
+  //       text: tips,
+  //       spinner: 'el-icon-loading',
+  //       background: 'rgba(0, 0, 0, 0.7)'
+  //     })
+  //   }
   }
 }
 </script>
@@ -377,17 +362,23 @@ export default {
     }
 
     .hd {
+        margin-bottom: 20px;
         padding: 5px 20px;
         line-height: 25px;
         font-size: 14px;
         font-weight: 600;
         color: #000;
         background-color: #f1f2f3;
-        border-bottom: solid 1px #d2d8e4;
+        border: solid 1px #d2d8e4;
     }
 
     .hd i {
         color: #2a68c9;
+    }
+
+    .commonForm{
+      margin: 0 auto;
+      width: 70%;
     }
 
     .warper {
@@ -481,5 +472,15 @@ export default {
 
     .dialog-box {
         display: flex;
+    }
+
+    .common-btns{
+      width: 100%;
+      line-height: 48px;
+      text-align: center;
+    }
+
+    .common-btns >>> .el-button{
+      margin:0 40px;
     }
 </style>

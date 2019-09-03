@@ -386,14 +386,53 @@ export const asyncRoutes = [
   {
     path: '/mediaMsg',
     component: Layout,
+    redirect: '/mediaMsg/index',
+    meta: { title: '媒体信息', icon: 'tab' },
     children: [
       {
         path: 'index',
         component: () => import('@/views/mediaMsg/index'),
         name: 'mediaMsg',
-        meta: { title: '媒体信息', icon: 'tab' }
+        meta: { title: '个人库' }
+      },
+      {
+        path: 'all',
+        component: () => import('@/views/mediaMsg/all'),
+        name: 'mediaMsg',
+        meta: { title: '全库' }
+      },
+      {
+        path: 'create',
+        component: () => import('@/views/mediaMsg/children/create'),
+        name: 'mediaMsgCreate',
+        meta: { title: '新建' },
+        hidden: true
+      },
+      {
+        path: 'check',
+        component: () => import('@/views/mediaMsg/children/check'),
+        name: 'mediaMsg',
+        meta: { title: '查看' },
+        hidden: true
       }
     ]
+
+    //   path: '/table',
+    // component: Layout,
+    // redirect: '/table/complex-table',
+    // name: 'Table',
+    // meta: {
+    //   title: 'Table',
+    //   icon: 'table'
+    // },
+    // children: [
+    //   {
+    //     path: 'dynamic-table',
+    //     component: () => import('@/views/table/dynamic-table/index'),
+    //     name: 'DynamicTable',
+    //     meta: { title: 'Dynamic Table' }
+    //   },
+
   },
   // {
   //   path: '/jobLogging',

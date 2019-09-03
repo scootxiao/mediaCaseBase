@@ -164,6 +164,7 @@ export default {
           })
             .then(res => {
               this.key = res.data
+              console.log('获取key值成功')
               this.$store.dispatch('user/login', { ...this.loginForm, key: this.key })
                 .then(res => {
                   console.log('login res:', res, this.redirect, this.otherQuery)

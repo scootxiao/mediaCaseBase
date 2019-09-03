@@ -95,8 +95,8 @@
           />
           <div class="tree-box">
             <el-tree
-              class="filter-tree"
               ref="personalMediaTree"
+              class="filter-tree"
               :data="personalMediaTreeData"
               :props="defaultProps"
               node-key="nodeKey"

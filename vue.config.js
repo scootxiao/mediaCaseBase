@@ -52,7 +52,7 @@ module.exports = {
       //   changeOrigin: true,
       //   ws: true,
       //   pathRewrite: {
-      //     '/login': '/'
+      //     '^/login': '/'
       //   }
       // },
       '/media_repository': {

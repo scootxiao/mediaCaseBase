@@ -1,4 +1,4 @@
-import request from '@/util/request'
+import request from '@/utils/request'
 
 export function getMedia(params) {
   return request({
@@ -7,3 +7,13 @@ export function getMedia(params) {
     data: params
   })
 }
+
+// 获取表格数据
+export function getMediaPersonList(data) {
+  return request({
+    url: '/media_repository/mediaPerson/selectPage',
+    method: 'post',
+    data: data
+  })
+}
+

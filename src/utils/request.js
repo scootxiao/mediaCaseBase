@@ -23,7 +23,7 @@ service.interceptors.request.use(
       // config.headers['X-Token'] = getToken()
       config.headers['Authorization'] = 'Bearer ' + getToken()
     }
-    console.log('config:', config)
+    // console.log('config:', config)
     return config
   },
   error => {
@@ -76,14 +76,14 @@ service.interceptors.response.use(
     // }
 
     if (res.code) {
-      console.log('response res:', res)
+      // console.log('response res:', res)
       return res
     } else {
       return response
     }
   },
   error => {
-    console.log('response拦截器出错')
+    // console.log('response拦截器出错')
     console.log('err' + error) // for debug
     // Message({
     //   message: error.message,

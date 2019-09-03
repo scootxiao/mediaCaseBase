@@ -1,16 +1,44 @@
 <template>
-  <el-form-item :label="label" :required="required">
-    <el-select v-model="pr" placeholder="请选择" clearable :style="selectStyle" @change="rangeChange">
+    <!-- <el-select 
+      v-model="pr" 
+      placeholder="请选择" 
+      clearable 
+      :style="selectStyle" 
+      @change="rangeChange"
+    >
       <el-option label="国内" value="1" />
       <el-option label="国外" value="2" />
     </el-select>
-    <el-select v-model="pid" placeholder="省/国家" filterable clearable :style="selectStyle" @change="parentChange">
+    <el-select 
+      v-model="pid" 
+      placeholder="省/国家" 
+      filterable clearable 
+      :style="selectStyle" 
+      @change="parentChange"
+    >
       <el-option v-for="p in positionParentOptions" :key="p.id" :label="p.name" :value="p.id" />
     </el-select>
-    <el-select v-model="id" placeholder="市" filterable clearable :style="selectStyle" @change="positionChange">
+    <el-select 
+      v-model="id" 
+      placeholder="市" 
+      filterable 
+      clearable 
+      :style="selectStyle" 
+      @change="positionChange"
+    >
       <el-option v-for="p in positionOptions" :key="p.id" :label="p.name" :value="p.id" />
-    </el-select>
-  </el-form-item>
+    </el-select> -->
+    <el-cascader
+      placeholder="媒体位置"
+      :options="options"
+      :props="props"
+      clearable
+      separator=">"
+      filterable
+      class="filter-item"
+      style="width:240px;"
+    >
+    </el-cascader>
 </template>
 <script>
 import AreaInfoAPI from '@/api/areaInfo'
@@ -42,99 +70,57 @@ export default {
   },
   data() {
     return {
-      pr: this.positionRange,
-      pid: this.positionParentId,
-      id: this.positionId,
-      positionParentOptions: [],
-      positionOptions: [],
-      loadingParent: false,
-      tryTimes: 0
+      // pr: this.positionRange,
+      // pid: this.positionParentId,
+      // id: this.positionId,
+      // positionParentOptions: [],
+      // positionOptions: [],
+      // loadingParent: false,
+      // tryTimes: 0,
+      props: {
+        lazy: true,
+        checkStrictly: true,
+        lazyLoad: this.lazyLoad
+      },
+      options:[{label:"国内", value: 1},{label:"国外", value: 2}],
     }
-  },
-  watch: {
-    positionRange(val) {
-      this.pr = val
-      this.getPositionParentOptions(false)
-    },
-    positionParentId(val) {
-      this.pid = val
-      if (this.loadingParent) {
-        setTimeout(() => {
-          this.getPositionOptions(false)
-        }, 500)
-      } else {
-        this.getPositionOptions(false)
-      }
-    },
-    positionId(val) {
-      this.id = val
-    }
-  },
-  created() {
-    this.getPositionParentOptions()
   },
   methods: {
-    rangeChange() {
-      this.getPositionParentOptions()
-      this.$emit('range-change', this.pr)
-    },
-    parentChange() {
-      this.getPositionOptions()
-      this.$emit('parent-change', this.pid)
-    },
-    positionChange() {
-      this.$emit('position-change', this.id)
-    },
-    getPositionParentOptions(clear = true) {
-      this.loadingParent = true
-      if (clear) {
-        this.pid = null
-        this.id = null
-        this.positionOptions = []
-      }
-      if (this.pr == 1) {
-        AreaInfoAPI.geAreaList({ level: 1 }).then(res => {
-          this.loadingParent = false
-          this.positionParentOptions = res.data
-        }).catch(err => {
-          this.loadingParent = false
-        })
-      } else {
-        AreaInfoAPI.getForeignAreaList({ parentId: 0 }).then(res => {
-          this.loadingParent = false
-          this.positionParentOptions = res.data
-        }).catch(err => {
-          this.loadingParent = false
-        })
+    lazyLoad(node, resolve) {
+      const { level } = node;
+      if( 1 === level ){
+        if (node.value === 1) { //国内
+          AreaInfoAPI.geAreaList({ level: 1 }).then(res => {
+            resolve( this.createNodes(res.data, {inland:true}) )
+          })
+        } else { //国外
+          AreaInfoAPI.getForeignAreaList({ parentId: 0 }).then(res => {
+            console.log("res.data:",res.data);
+            resolve( this.createNodes(res.data, {inland:false}) )
+          })
+        }
+      }if( 2 === level ){
+        if ( node.data.inland ) { //国内
+          AreaInfoAPI.geAreaList({ parent_code: node.data.code }).then(res => {
+            resolve( this.createNodes(res.data, {leaf:true}) )
+          })
+        } else { //国外
+          AreaInfoAPI.getForeignAreaList({ parentId: node.data.id }).then(res => {
+            resolve( this.createNodes(res.data, {leaf:true}) )
+          })
+        }
       }
     },
-    getPositionOptions(clear = true) {
-      /* if (this.loadingParent) {
-                    if (this.tryTimes < 3) {
-                        setTimeout(() => {
-                            this.getPositionOptions(clear);
-                        }, 200)
-                        this.tryTimes++;
-                    }
-                    return;
-                }
-                this.tryTimes = 0;*/
-      if (clear) {
-        this.id = null
-        this.positionOptions = []
-      }
-      const parent_id = this.pid
-      if (this.pr == 1) {
-        const index = this.positionParentOptions.findIndex(item => item.id == parent_id)
-        const code = this.positionParentOptions[index].code
-        AreaInfoAPI.geAreaList({ parent_code: code }).then(res => {
-          this.positionOptions = res.data
-        })
-      } else {
-        AreaInfoAPI.getForeignAreaList({ parentId: parent_id }).then(res => {
-          this.positionOptions = res.data
-        })
-      }
+    createNodes(value, curObj){
+      let newNodes = value.map((item, index)=>{
+            return{
+              ...item,
+              label: item.name,
+              value: item.id,
+              ...curObj
+            }
+          })
+      return newNodes;
     }
   }
 }
