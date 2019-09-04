@@ -1,33 +1,19 @@
 <template>
   <span>
-    <el-select v-if="showStore" placeholder="层级" class="filter-item" v-model="storey" @change="storeChange">
+    <el-select placeholder="层级" class="filter-item" v-model="storey" @change="storeChange">
       <el-option label="全部" value="" />
       <el-option v-for="m in mediaStoreOptions" :key="m.value" :label="m.name" :value="m.value" />
     </el-select>
-
-    <!-- <el-form-item label="媒体：">
-      <el-select v-if="showType" v-model="mediaType" @change="typeChange">
-        <el-option label="全部类型" value="" />
-        <el-option v-for="m in mediaTypeOptions" :key="m.value" :label="m.name" :value="m.value" />
-      </el-select>
-      <el-select v-model="mediaId" @change="mediaChange">
-        <el-option label="全部媒体" value="" />
-        <el-option v-for="m in mediaOptions" :key="m.id" :label="m.name" :value="m.id" />
-      </el-select>
-      <el-select v-if="showBlock" v-model="mediaBlockId" @change="blockChange">
-        <el-option label="全部版块" value="" />
-        <el-option v-for="m in mediaBlockOptions" :key="m.id" :label="m.name" :value="m.id" />
-      </el-select>
-    </el-form-item> -->
     <el-cascader
       placeholder="媒体类型>媒体>板块"
       :options="options"
       :props="props"
       clearable
       separator=">"
-      :value="mediaValue"
+      v-model="mediaValue"
       class="filter-item"
       style="width:240px;"
+      @change="mediaChange"
     >
     </el-cascader>
   </span>
@@ -36,31 +22,12 @@
 import MediaAPI from '@/api/mediaSettings'
 export default {
   name: 'MediaSelector',
-  props: {
-    showStore: {
-      type: Boolean,
-      default: true
-    },
-    showType: {
-      type: Boolean,
-      default: true
-    },
-    showBlock: {
-      type: Boolean,
-      default: true
-    }
-  },
   data() {
     return {
       storey: '',   //层级
-      mediaType: '',
-      mediaId: '',
-      mediaBlockId: '',
-      mediaStoreOptions: MediaAPI.getMediaStores(),
-      mediaTypeOptions: MediaAPI.getMediaTypes(),
-      mediaOptions: [],
-      mediaBlockOptions: [],
-      mediaValue: "",
+      mediaStoreOptions: MediaAPI.getMediaStores(), //层级分类
+      mediaTypeOptions: MediaAPI.getMediaTypes(),   //媒体类型分类
+      mediaValue: ['','',''],
       props: {
         lazy: true,
         checkStrictly: true,
@@ -70,9 +37,13 @@ export default {
     }
   },
   created() {
-    this.options = this.mediaTypeOptions.map((item, index)=>{return {value: item.value,label: item.name,storey: this.storey}});
+    this.optionsInit();
   },
   methods: {
+    optionsInit(){
+      this.options = this.mediaTypeOptions.map((item, index)=>{return {value: item.value,label: item.name,storey: this.storey}});
+      this.mediaValue = ['','',''];
+    },
     lazyLoad(node, resolve) {
       const { level } = node;
       console.log("node:",node,"level:",level);
@@ -81,35 +52,39 @@ export default {
           storey: this.storey,  // 层级
           media_type: node.value  //媒体类型 
         }).then(res => {
-          let nodes = res.data.records.map((item, inde)=>{
-            return {
-              ...item,
-              label: item.name,
-              value: item.id
-            }
-          })
-          resolve(nodes);
+          resolve(this.createNodes(res.data.records));
         })
       }if(2=== level){
         MediaAPI.mediaBlockPager({
           media_id: node.value
         }).then(res => {
-          let nodes = res.data.records.map((item, inde)=>{
-            return {
-              ...item,
-              label: item.name,
-              value: item.id,
-              leaf: true,
-            }
-          })
-          resolve(nodes);
+          resolve(this.createNodes(res.data.records,{leaf:true}));
         })
       }
     },
     storeChange() {
-      this.options = this.mediaTypeOptions.map((item, index)=>{return {value: item.value,label: item.name,storey: this.storey}});
+      this.optionsInit();
+      this.mediaChange();
     },
-
+    mediaChange(){
+      this.$emit('mediaChange', {
+        storey: this.storey,
+        mediaType: typeof(this.mediaValue[0]) !== "undefined" ? this.mediaValue[0] : '',
+        mediaId: typeof(this.mediaValue[1]) !== "undefined" ? this.mediaValue[1] : '',
+        mediaBlockId: typeof(this.mediaValue[2]) !== "undefined" ? this.mediaValue[2] : '',
+      })
+    },
+    createNodes(value, curObj){
+      let newNodes = value.map((item, index)=>{
+            return {
+              ...item,
+              label: item.name,
+              value: item.id,
+              ...curObj
+            }
+          })
+      return newNodes;
+    }
   }
 }
 </script>

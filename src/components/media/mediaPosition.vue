@@ -1,33 +1,4 @@
 <template>
-    <!-- <el-select 
-      v-model="pr" 
-      placeholder="请选择" 
-      clearable 
-      :style="selectStyle" 
-      @change="rangeChange"
-    >
-      <el-option label="国内" value="1" />
-      <el-option label="国外" value="2" />
-    </el-select>
-    <el-select 
-      v-model="pid" 
-      placeholder="省/国家" 
-      filterable clearable 
-      :style="selectStyle" 
-      @change="parentChange"
-    >
-      <el-option v-for="p in positionParentOptions" :key="p.id" :label="p.name" :value="p.id" />
-    </el-select>
-    <el-select 
-      v-model="id" 
-      placeholder="市" 
-      filterable 
-      clearable 
-      :style="selectStyle" 
-      @change="positionChange"
-    >
-      <el-option v-for="p in positionOptions" :key="p.id" :label="p.name" :value="p.id" />
-    </el-select> -->
     <el-cascader
       placeholder="媒体位置"
       :options="options"
@@ -35,8 +6,10 @@
       clearable
       separator=">"
       filterable
+      v-model="mediaPosition"
       class="filter-item"
       style="width:240px;"
+      @change="positionChange"
     >
     </el-cascader>
 </template>
@@ -44,48 +17,25 @@
 import AreaInfoAPI from '@/api/areaInfo'
 export default {
   name: 'MediaPosition',
-  props: {
-    label: {
-      type: String,
-      default: ''
-    },
-    required: {
-      type: Boolean,
-      default: false
-    },
-    selectStyle: {
-      type: String,
-      default: ''
-    },
-    positionRange: {
-      type: String,
-      default: '1'
-    },
-    positionParentId: {
-      type: [Number, String]
-    },
-    positionId: {
-      type: [Number, String]
-    }
-  },
   data() {
     return {
-      // pr: this.positionRange,
-      // pid: this.positionParentId,
-      // id: this.positionId,
-      // positionParentOptions: [],
-      // positionOptions: [],
-      // loadingParent: false,
-      // tryTimes: 0,
       props: {
         lazy: true,
         checkStrictly: true,
         lazyLoad: this.lazyLoad
       },
+      mediaPosition:['','',''],
       options:[{label:"国内", value: 1},{label:"国外", value: 2}],
     }
   },
   methods: {
+    positionChange(){
+      this.$emit('positionChange', {
+        positionRange: typeof(this.mediaPosition[0]) !== "undefined" ? this.mediaPosition[0] : '',
+        positionParentId: typeof(this.mediaPosition[1]) !== "undefined" ? this.mediaPosition[1] : '',
+        positionId: typeof(this.mediaPosition[2]) !== "undefined" ? this.mediaPosition[2] : '',
+      })
+    },
     lazyLoad(node, resolve) {
       const { level } = node;
       if( 1 === level ){

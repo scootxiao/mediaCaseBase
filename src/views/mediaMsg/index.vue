@@ -8,21 +8,10 @@
           maxlength="20"
           class="filter-item"
           style="width:180px;"
+          prefix-icon="el-icon-search"
         />
-        <!-- <media-selector
-          @store-change="storeChange"
-          @type-change="typeChange"
-          @media-change="mediaChange"
-          @block-change="blockChange"
-        /> -->
-        <media-selector></media-selector>
-        <media-position
-          :label="'媒体位置：'"
-          :position-range="this.formData.positionRange"
-          @range-change="rangeChange"
-          @parent-change="parentChange"
-          @position-change="positionChange"
-        />
+        <media-selector @mediaChange="mediaChange" />
+        <media-position @positionChange="positionChange" />
         <el-button type="primary" class="filter-item" icon="search" @click="getMediaPersonList">查询</el-button>
         <el-button type="primary" class="filter-item" style="margin-left:30px;" @click="toCreate">新建</el-button>
         <el-button type="primary" class="filter-item" @click="showExportDialog">导出</el-button>
@@ -70,7 +59,6 @@
           {{ scope.row.name }}
         </template>
       </el-table-column>
-
       <el-table-column label="亲密性" align="center" width="100px">
         <template slot-scope="scope">
           <svg-icon icon-class="star" class="meta-item__icon" />
@@ -107,42 +95,44 @@
       </el-table-column>
     </el-table>
 
-    <!-- pege 表示当前第几页 total是总数 limit是每页显示多少条 getList是数据请求回调 -->
     <pagination v-show="pagination.peopleCount>0" :total="pagination.peopleCount" :page.sync="pagination.currentPage" :limit.sync="pagination.pageSize" @pagination="getMediaPersonList" />
 
-    <!-- <el-dialog title="导出验证" :visible.sync="exportDialog.show" width="40%">
-      <el-form label-width="30%" :model="exportDialog">
-        <el-form-item label="操作人：">{{ exportDialog.name }}</el-form-item>
-        <el-form-item label="手机验证码：" style="width: 100%">
-          <el-input v-model="exportDialog.verifyCode" style="width: 60%;" @keyup.enter.native="exportExcel" />
-          <el-button :disabled="!exportDialog.canGetCode" @click="getVerifyCode">{{ exportDialog.getCodeBtnText }}</el-button>
+    <el-dialog title="导出验证" :visible.sync="exportDialog.show" width="35%">
+      <el-form label-width="120px" :model="exportDialog">
+        <el-form-item label="操作人：">
+          <el-input v-model="exportDialog.name" :disabled="true"></el-input>
+          </el-form-item>
+        <el-form-item label="手机验证码：">
+          <el-input v-model="exportDialog.verifyCode" style="width:calc(100% - 150px)" @keyup.enter.native="exportExcel" />
+          <el-button style="margin-left:25px;width:120px;" :disabled="!exportDialog.canGetCode" @click="getVerifyCode">{{ exportDialog.getCodeBtnText }}</el-button>
         </el-form-item>
         <el-form-item>
-          <div style="color: #888; font-size: smaller;text-align: center">
+          <div class="tip">
             该账号绑定手机号为：{{ exportDialog.phone }}，如手机号有误请前往个人中心修改手机号
           </div>
         </el-form-item>
       </el-form>
-      <div style="text-align: center; margin-top: 2em;">
+      <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="exportExcel">确 定</el-button>
-        <el-button style="margin-left: 2em;" @click="exportDialog.show = false">取 消</el-button>
-      </div>
-    </el-dialog> -->
+        <el-button @click="exportDialog.show = false">取 消</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import MediaAPI from '@/api/mediaSettings'
-import AreaInfoAPI from '@/api/areaInfo'
-import UserAPI from '@/api/user.js'
-import { getMediaPersonList, delRow } from '@/api/mediaMsg'
-
-import WaterMask from '@/utils/waterMask'
 import FileUtil from '@/utils/file.js'
 
 import mediaPosition from '@/components/media/mediaPosition'
 import mediaSelector from '@/components/media/mediaSelector'
 import Pagination from '@/components/Pagination'
+
+import {  getMediaPersonList, 
+          delRow, 
+          getLoginUserInfo,
+          getVerifyCode,
+          exportExcel } from '@/api/mediaMsg'
+
 export default {
   name: 'MediaMsg',
   components: { mediaPosition, mediaSelector, Pagination },
@@ -164,88 +154,52 @@ export default {
         pageSize: 20,
         peopleCount: 0
       },
-      mediaOptions: [],
-      mediaTypeOptions: MediaAPI.getMediaTypes(),
-      mediaStoreOptions: MediaAPI.getMediaStores(),
-      mediaBlockOptions: [],
-      positionParentOptions: [],
-      positionOptions: [],
       tableData: [],
       selection: [],
-      // exportDialog: {
-      //   show: false,
-      //   verifyCode: '',
-      //   timer: null,
-      //   canGetCode: true,
-      //   name: '',
-      //   getCodeBtnText: '获取验证码',
-      //   phone: ''
-      // },
+      exportDialog: {
+        show: false,
+        verifyCode: '',
+        timer: null,
+        canGetCode: true,
+        name: '',
+        getCodeBtnText: '获取验证码',
+        phone: ''
+      },
       userInfo: null
     }
   },
-  computed: {},
   created() {
     this.getMediaPersonList()
   },
-  mounted() {
-  },
   methods: {
+    // 层级媒体类型
+    mediaChange(value){
+      Object.assign(this.formData, {...value})
+    },
+    // 媒体位置
+    positionChange(value){
+      Object.assign(this.formData, {...value})
+    },
     handleView(value) {
-      // const router = this.$router.resolve({
-      //   path: '/personLibraryCheck',
-      //   query: {
-      //     id: value.id
-      //   }
-      // })
-      // window.open(router.href, '_blank')
+      this.$router.push({
+        path: '/mediaMsg/create',
+        query: {
+          id: value.id
+        }
+      })
     },
     handleEdit(value) {
-      // const router = this.$router.resolve({
-      //   path: '/mediaMsg/create',
-      //   query: {
-      //     id: value.id
-      //   }
-      // })
-      // window.open(router.href, '_blank')
       this.$router.push({
-        path: '/mediaMsg/create'
+        path: '/mediaMsg/create',
+        query: {
+          id: value.id
+        }
       })
     },
     toCreate() {
-      // const router = this.$router.resolve({
-      //   path: '/mediaMsg/create'
-      // })
-      // window.open(router.href, '_blank')
       this.$router.push({
         path: '/mediaMsg/create'
       })
-    },
-    storeChange(store) {
-      this.formData.storey = store
-      this.formData.mediaId = ''
-      this.formData.mediaBlockId = ''
-    },
-    typeChange(type) {
-      this.formData.mediaType = type
-      this.formData.mediaId = ''
-      this.formData.mediaBlockId = ''
-    },
-    mediaChange(mediaId) {
-      this.formData.mediaId = mediaId
-      this.formData.mediaBlockId = ''
-    },
-    blockChange(blockId) {
-      this.formData.mediaBlockId = blockId
-    },
-    rangeChange(range) {
-      this.formData.positionRange = range
-    },
-    parentChange(parentId) {
-      this.formData.positionParentId = parentId
-    },
-    positionChange(positionId) {
-      this.formData.positionId = positionId
     },
     selectionChange(selection) {
       this.selection = selection
@@ -271,21 +225,22 @@ export default {
         this.tableData[index].phone = this.tableData[index].realPhone
       }
     },
-    // async deleteByIds() {
-    //   const ids = (this.selection || []).map(item => item.id).join(',')
-    //   if (!ids) {
-    //     this.$message.warning('需选择删除项')
-    //     return
-    //   }
-    //   await this.$confirm('您确定要删除勾选的数据吗？')
-    //   this.showLoading('处理中，请稍候...')
-    //   delRow(ids)
-    //     .then(res=>{
-    //       this.$message.success('删除成功')
-    //       this.getMediaPersonList()
-    //     })
-    //   this.loading.close()
-    // },
+    async deleteByIds() {
+      const ids = (this.selection || []).map(item => item.id).join(',')
+      if (!ids) {
+        this.$message.warning('需选择删除项')
+        return
+      }
+      await this.$confirm('您确定要删除勾选的数据吗？')
+      this.showLoading('处理中，请稍候...')
+      console.log("ids:",ids);
+      delRow(ids)
+        .then(res=>{
+          this.$message.success('删除成功')
+          this.getMediaPersonList()
+        })
+      this.loading.close()
+    },
     showLoading(tips) {
       this.loading = this.$loading({
         lock: true,
@@ -298,69 +253,78 @@ export default {
       this.$router.push({
         path: '/mediaMsg/all'
       })
+    },
+    showExportDialog() {
+      this.exportDialog.show = true
+      if (!this.userInfo) {
+        getLoginUserInfo().then(res => {
+          this.userInfo = res.data
+          this.exportDialog.name = this.userInfo.username
+          this.exportDialog.phone = (this.userInfo.phone || '').replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
+        })
+      }
+    },
+    // 获取验证码 
+    getVerifyCode() {
+      this.exportDialog.canGetCode = false
+      getVerifyCode(this.userInfo.phone)
+        .then(res=>{
+          this.exportDialog.getCodeBtnText = '重新获取(60s)'
+          if (res.code == '0') {
+            this.exportDialog.getCodeBtnText = '重新获取(60s)'
+            this.exportDialog.timer = setInterval(() => {
+              let num = (this.exportDialog.getCodeBtnText || '0').replace(/\D+/g, '')
+              num -= 1
+              if (num < 1) {
+                clearInterval(this.exportDialog.timer)
+                this.exportDialog.canGetCode = true
+                this.exportDialog.getCodeBtnText = '点击获取'
+              } else {
+                this.exportDialog.getCodeBtnText = `重新获取(${num}s)`
+              }
+            }, 1000)
+          } else {
+            this.$message.error(res.msg)
+            this.exportDialog.canGetCode = true
+          }
+        })
+        .catch(err => {
+          this.exportDialog.canGetCode = true
+        })
+    },
+    exportExcel() {
+      if (!/^\d{6}$/.test(this.exportDialog.verifyCode)) {
+        this.$message.warning('请输入6位数字的验证码')
+        return
+      }
+      this.showLoading('处理中，请稍候...')
+      exportExcel(
+        Object.assign(this.formData, {
+          current: 1,
+          size: 5000,
+          verifyCode: this.exportDialog.verifyCode
+        })
+      )
+        .then(res=>{
+          this.loading.close()
+          FileUtil.downLoadFromResponse(res, () => {
+            this.exportDialog.show = false
+          }, text => {
+            this.$message.error(JSON.parse(text).msg)
+          })
+        })
+        .catch(err => {
+          this.loading.close()
+        })
     }
-    // showExportDialog() {
-    //   this.exportDialog.show = true
-    //   if (!this.userInfo) {
-    //     UserAPI.getLoginUserInfo().then(res => {
-    //       this.userInfo = res.data
-    //       this.exportDialog.name = this.userInfo.username
-    //       this.exportDialog.phone = (this.userInfo.phone || '').replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
-    //     })
-    //   }
-    // },
-    // getVerifyCode() {
-    //   this.exportDialog.canGetCode = false
-    //   axios.get(`/media_repository/common/query/getPhoneVerifyCode?phone=${this.userInfo.phone}&template=1`).then(res => {
-    //     if (res.data.code == '0') {
-    //       this.exportDialog.getCodeBtnText = '重新获取(60s)'
-    //       this.exportDialog.timer = setInterval(() => {
-    //         let num = (this.exportDialog.getCodeBtnText || '0').replace(/\D+/g, '')
-    //         num -= 1
-    //         if (num < 1) {
-    //           clearInterval(this.exportDialog.timer)
-    //           this.exportDialog.canGetCode = true
-    //           this.exportDialog.getCodeBtnText = '点击获取'
-    //         } else {
-    //           this.exportDialog.getCodeBtnText = `重新获取(${num}s)`
-    //         }
-    //       }, 1000)
-    //     } else {
-    //       this.$message.error(res.data.msg)
-    //       this.exportDialog.canGetCode = true
-    //     }
-    //   }).catch(err => {
-    //     this.exportDialog.canGetCode = true
-    //   })
-    // },
-    // exportExcel() {
-    //   if (!/^\d{6}$/.test(this.exportDialog.verifyCode)) {
-    //     this.$message.warning('请输入6位数字的验证码')
-    //     return
-    //   }
-    //   this.showLoading('处理中，请稍候...')
-    //   const data = Object.assign(this.formData, {
-    //     current: 1,
-    //     size: 5000,
-    //     verifyCode: this.exportDialog.verifyCode
-    //   })
-    //   axios({
-    //     method: 'post',
-    //     url: '/media_repository/mediaPerson/export',
-    //     data,
-    //     processData: false,
-    //     responseType: 'blob'
-    //   }).then(res => {
-    //     this.loading.close()
-    //     FileUtil.downLoadFromResponse(res, () => {
-    //       this.exportDialog.show = false
-    //     }, text => {
-    //       this.$message.error(JSON.parse(text).msg)
-    //     })
-    //   }).catch(err => {
-    //     this.loading.close()
-    //   })
-    // }
   }
 }
 </script>
+<style lang="sass" scoped>
+  .tip
+    width: 80%
+    line-height: 24px
+    font-size: 12px
+    color: #f00
+    text-align: left
+</style>

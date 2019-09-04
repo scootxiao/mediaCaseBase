@@ -48,11 +48,19 @@ export default {
 }
 
 .footer{
-  padding:5px 20px;
-  background-color: #f0f0f0;
-  font-size: 14px;
-  color: #111;
-  text-align: center;
+  background: none repeat scroll 0 0 #fff;
+  border-top: 1px solid #e7eaec;
+  overflow: hidden;
+  padding: 10px 6px 0;
+  height: 33px;
+  font-size: .7rem!important;
+  color: #7a8b9a;
+  letter-spacing: .8px;
+  font-family: Arial,sans-serif!important;
+  z-index: 99;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
 }
 </style>
 
