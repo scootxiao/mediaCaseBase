@@ -8,9 +8,9 @@
         />
         <div class="tree-box">
           <el-tree
+            :ref="ref"
             class="filter-tree"
             :data="treeNode"
-            :ref="ref"
             :props="props"
             node-key="id"
             show-checkbox

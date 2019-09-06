@@ -27,6 +27,25 @@
     >
       <el-table-column type="selection" align="center" width="50" fixed />
       <el-table-column
+        property="name"
+        align="center"
+        label="媒体人"
+        sortable
+        width="120"
+        show-overflow-tooltip
+      >
+        <template slot-scope="scope">
+          {{ scope.row.name }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        property="job"
+        align="center"
+        label="媒体人职务"
+        width="100px"
+        show-overflow-tooltip
+      />
+      <el-table-column
         property="storey"
         align="center"
         label="媒体层级"
@@ -47,18 +66,7 @@
           {{ scope.row.positionName }}
         </template>
       </el-table-column>
-      <el-table-column
-        property="name"
-        align="center"
-        label="媒体人"
-        sortable
-        width="120"
-        show-overflow-tooltip
-      >
-        <template slot-scope="scope">
-          {{ scope.row.name }}
-        </template>
-      </el-table-column>
+
       <el-table-column label="亲密性" align="center" width="100px">
         <template slot-scope="scope">
           <svg-icon icon-class="star" class="meta-item__icon" />
@@ -66,13 +74,6 @@
           <svg-icon v-if="scope.row.relation == 1" icon-class="star" class="meta-item__icon" />
         </template>
       </el-table-column>
-      <el-table-column
-        property="job"
-        align="center"
-        label="媒体人职务"
-        width="100px"
-        show-overflow-tooltip
-      />
       <el-table-column
         property="phone"
         align="center"
@@ -100,8 +101,8 @@
     <el-dialog title="导出验证" :visible.sync="exportDialog.show" width="35%">
       <el-form label-width="120px" :model="exportDialog">
         <el-form-item label="操作人：">
-          <el-input v-model="exportDialog.name" :disabled="true"></el-input>
-          </el-form-item>
+          <el-input v-model="exportDialog.name" :disabled="true" />
+        </el-form-item>
         <el-form-item label="手机验证码：">
           <el-input v-model="exportDialog.verifyCode" style="width:calc(100% - 150px)" @keyup.enter.native="exportExcel" />
           <el-button style="margin-left:25px;width:120px;" :disabled="!exportDialog.canGetCode" @click="getVerifyCode">{{ exportDialog.getCodeBtnText }}</el-button>
@@ -127,11 +128,11 @@ import mediaPosition from '@/components/media/mediaPosition'
 import mediaSelector from '@/components/media/mediaSelector'
 import Pagination from '@/components/Pagination'
 
-import {  getMediaPersonList, 
-          delRow, 
-          getLoginUserInfo,
-          getVerifyCode,
-          exportExcel } from '@/api/mediaMsg'
+import { getMediaPersonList,
+  delRow,
+  getLoginUserInfo,
+  getVerifyCode,
+  exportExcel } from '@/api/mediaMsg'
 
 export default {
   name: 'MediaMsg',
@@ -173,16 +174,16 @@ export default {
   },
   methods: {
     // 层级媒体类型
-    mediaChange(value){
-      Object.assign(this.formData, {...value})
+    mediaChange(value) {
+      Object.assign(this.formData, { ...value })
     },
     // 媒体位置
-    positionChange(value){
-      Object.assign(this.formData, {...value})
+    positionChange(value) {
+      Object.assign(this.formData, { ...value })
     },
     handleView(value) {
       this.$router.push({
-        path: '/mediaMsg/create',
+        path: '/mediaMsg/check',
         query: {
           id: value.id
         }
@@ -190,7 +191,7 @@ export default {
     },
     handleEdit(value) {
       this.$router.push({
-        path: '/mediaMsg/create',
+        path: '/mediaMsg/edit',
         query: {
           id: value.id
         }
@@ -233,9 +234,9 @@ export default {
       }
       await this.$confirm('您确定要删除勾选的数据吗？')
       this.showLoading('处理中，请稍候...')
-      console.log("ids:",ids);
+      console.log('ids:', ids)
       delRow(ids)
-        .then(res=>{
+        .then(res => {
           this.$message.success('删除成功')
           this.getMediaPersonList()
         })
@@ -264,11 +265,11 @@ export default {
         })
       }
     },
-    // 获取验证码 
+    // 获取验证码
     getVerifyCode() {
       this.exportDialog.canGetCode = false
       getVerifyCode(this.userInfo.phone)
-        .then(res=>{
+        .then(res => {
           this.exportDialog.getCodeBtnText = '重新获取(60s)'
           if (res.code == '0') {
             this.exportDialog.getCodeBtnText = '重新获取(60s)'
@@ -305,7 +306,7 @@ export default {
           verifyCode: this.exportDialog.verifyCode
         })
       )
-        .then(res=>{
+        .then(res => {
           this.loading.close()
           FileUtil.downLoadFromResponse(res, () => {
             this.exportDialog.show = false

@@ -7,84 +7,77 @@
           <el-option label="按负责人" value="chargeByName" />
           <el-option v-if="userType == 3" label="按负责部门" value="chargeByDeptName" />
         </el-select>
-        <el-input class="filter-item" style="width:180px;" v-model.trim="keyword" placeholder="输入关键字" maxlength="20" />
-        <media-selector
-          @store-change="storeChange"
-          @type-change="typeChange"
-          @media-change="mediaChange"
-          @block-change="blockChange"
+        <el-input
+          v-model.trim="keyword"
+          class="filter-item"
+          style="width:180px;"
+          placeholder="输入关键字"
+          maxlength="20"
+          prefix-icon="el-icon-search"
         />
-        <media-position
-          :label="'位置：'"
-          :position-range="this.formData.positionRange"
-          @range-change="rangeChange"
-          @parent-change="parentChange"
-          @position-change="positionChange"
-        />
-        <el-button class="filter-item" type="primary" icon="search" @click="getMediaPersonList">查询</el-button>
-
-        <el-button class="filter-item" v-if="userType == 2 || userType == 3" type="primary" plain @click="downloadTemplate">导入模板</el-button>
-        <el-button class="filter-item" v-if="userType == 2 || userType == 3" type="primary" plain @click="selectImportFile">导入</el-button>
-        <el-button class="filter-item" v-if="userType == 2 || userType == 3" type="primary" plain @click="showExportDialog">导出</el-button>
+        <media-selector @mediaChange="mediaChange" />
+        <media-position @positionChange="positionChange" />
+        <el-button class="filter-item" type="primary" @click="getMediaPersonList">查询</el-button>
+        <el-button class="filter-item" type="primary" @click="downloadTemplate">导入模板</el-button>
+        <el-button class="filter-item" type="primary" @click="selectImportFile">导入</el-button>
+        <el-button class="filter-item" type="primary" @click="showExportDialog">导出</el-button>
         <input id="import-file" type="file" style="display: none" accept=".xlsx" @change="importMediaPerson">
       </el-form>
     </div>
-    <el-table ref="singleTable" border :data="tableData" style="width: 100%">
+    <el-table ref="singleTable" :data="tableData" style="width: 100%">
       <el-table-column type="selection" align="center" width="50" fixed />
-      <el-table-column property="mediaType" align="center" label="媒体类型" />
-      <el-table-column
-        property="storey"
-        align="center"
-        label="媒体层级"
-        sortable
-        show-overflow-tooltip
-      />
-      <el-table-column
-        property="positionParentName"
-        align="center"
-        label="省/国家"
-        show-overflow-tooltip
-      />
-      <el-table-column
-        property="positionName"
-        align="center"
-        label="市"
-        show-overflow-tooltip
-      />
-      <el-table-column property="mediaName" align="center" label="媒体" show-overflow-tooltip />
-      <el-table-column
-        property="mediaBlockName"
-        align="center"
-        label="板块"
-        show-overflow-tooltip
-      >
-        <template slot-scope="scope">{{ (scope.row.mediaBlockName || '-- -- -- --').replace(/,/g, "，") }}</template>
-      </el-table-column>
       <el-table-column
         property="name"
         align="center"
         label="媒体人"
         sortable
+        width="120"
         show-overflow-tooltip
       >
         <template slot-scope="scope">
-          <span>{{ scope.row.name }}</span>
-          <span class="relation" :class="scope.row.relation == 1 ? 'relation-red' : 'relation-yellow'">
-            {{ scope.row.relation == 1 ? '密切' : '一般' }}
-          </span>
+          {{ scope.row.name }}
         </template>
       </el-table-column>
       <el-table-column
         property="job"
         align="center"
         label="媒体人职务"
+        width="100px"
         show-overflow-tooltip
       />
+      <el-table-column
+        property="storey"
+        align="center"
+        label="媒体层级"
+        sortable
+        width="120px"
+        show-overflow-tooltip
+      />
+      <el-table-column property="mediaType" align="left" label="媒体类型 > 媒体 > 板块" show-overflow-tooltip>
+        <template slot-scope="scope">
+          {{ scope.row.mediaType }} >
+          {{ scope.row.mediaName }} >
+          {{ (scope.row.mediaBlockName || '未知').replace(/,/g, "，") }}
+        </template>
+      </el-table-column>
+      <el-table-column property="mediaType" align="left" label="省/国家 > 市" show-overflow-tooltip>
+        <template slot-scope="scope">
+          {{ scope.row.positionParentName }} >
+          {{ scope.row.positionName }}
+        </template>
+      </el-table-column>
+      <el-table-column label="亲密性" align="center" width="100px">
+        <template slot-scope="scope">
+          <svg-icon icon-class="star" class="meta-item__icon" />
+          <svg-icon v-if="scope.row.relation == 1" icon-class="star" class="meta-item__icon" />
+          <svg-icon v-if="scope.row.relation == 1" icon-class="star" class="meta-item__icon" />
+        </template>
+      </el-table-column>
       <el-table-column
         property="phone"
         align="center"
         label="手机号码"
-        width="180px"
+        width="150px"
         show-overflow-tooltip
       >
         <template slot-scope="scope">
@@ -94,33 +87,30 @@
           </span>
         </template>
       </el-table-column>
-      <el-table-column property="chargeByDeptName" align="center" label="负责部门" show-overflow-tooltip />
-      <el-table-column property="chargeByName" align="center" label="负责人" show-overflow-tooltip />
-      <el-table-column label="操作" align="center" width="180px">
+      <el-table-column property="chargeByName" align="center" label="负责人" show-overflow-tooltip width="100px" />
+      <el-table-column label="操作" align="center" width="80px">
         <template slot-scope="scope">
-          <el-button size="small" type="primary" plain @click="handleView(scope.row)">查看</el-button>
-          <!--<el-button size="small" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>-->
+          <el-button type="primary" @click="handleView(scope.row)">查看</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <!-- pege 表示当前第几页 total是总数 limit是每页显示多少条 getList是数据请求回调 -->
     <pagination v-show="pagination.peopleCount>0" :total="pagination.peopleCount" :page.sync="pagination.currentPage" :limit.sync="pagination.pageSize" @pagination="getMediaPersonList" />
 
-    <el-dialog title="导出验证" :visible.sync="exportDialog.show" width="40%">
-      <el-form label-width="30%" :model="exportDialog">
+    <el-dialog title="导出验证" :visible.sync="exportDialog.show" width="35%">
+      <el-form label-width="120px" :model="exportDialog">
         <el-form-item label="操作人：">{{ exportDialog.name }}</el-form-item>
-        <el-form-item label="手机验证码：" style="width: 100%">
-          <el-input v-model="exportDialog.verifyCode" style="width: 60%;" @keyup.enter.native="exportExcel" />
+        <el-form-item label="手机验证码：">
+          <el-input v-model="exportDialog.verifyCode" style="width:calc(100% - 150px)" @keyup.enter.native="exportExcel" />
           <el-button :disabled="!exportDialog.canGetCode" @click="getVerifyCode">{{ exportDialog.getCodeBtnText }}</el-button>
         </el-form-item>
         <el-form-item>
-          <div style="color: #888; font-size: smaller;text-align: center">
+          <div class="tip">
             该账号绑定手机号为：{{ exportDialog.phone }}，如手机号有误请前往个人中心修改手机号
           </div>
         </el-form-item>
       </el-form>
-      <div style="text-align: center; margin-top: 2em;">
+      <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="exportExcel">确 定</el-button>
         <el-button style="margin-left: 2em;" @click="exportDialog.show = false">取 消</el-button>
       </div>
@@ -165,12 +155,6 @@ export default {
         pageSize: 20,
         peopleCount: 0
       },
-      mediaOptions: [],
-      mediaTypeOptions: MediaAPI.getMediaTypes(),
-      mediaStoreOptions: MediaAPI.getMediaStores(),
-      mediaBlockOptions: [],
-      positionParentOptions: [],
-      positionOptions: [],
       tableData: [],
       exportDialog: {
         show: false,
@@ -186,7 +170,6 @@ export default {
       userType: 1
     }
   },
-  computed: {},
   watch: {
     keywordType(val) {
       this.formData.personName = ''
@@ -199,71 +182,26 @@ export default {
     }
   },
   created() {
-    // this.getMediaPersonList()
-    // const type = JSON.parse(sessionStorage.getItem('user_info') || '{}').user_type
-    // this.userType = type
-  },
-  mounted() {
-
+    this.getMediaPersonList()
+    // let type = JSON.parse(sessionStorage.getItem("user_info") || "{}").user_type;
+    // this.userType = type;
   },
   methods: {
-    paginationSizeChange(value) {
-      this.pagination.pageSize = value
-      this.getMediaPersonList()
+    // 层级媒体类型
+    mediaChange(value) {
+      Object.assign(this.formData, { ...value })
     },
-    paginationCurrentChange(value) {
-      this.pagination.currentPage = value
-      this.getMediaPersonList()
+    // 媒体位置
+    positionChange(value) {
+      Object.assign(this.formData, { ...value })
     },
     handleView(value) {
-      const router = this.$router.resolve({
-        path: '/personLibraryCheck',
+      this.$router.push({
+        path: '/mediaMsg/check',
         query: {
           id: value.id
         }
       })
-      window.open(router.href, '_blank')
-    },
-    handleEdit(value) {
-      const router = this.$router.resolve({
-        path: '/personLibraryCreate',
-        query: {
-          id: value.id
-        }
-      })
-      window.open(router.href, '_blank')
-    },
-    toCreate() {
-      const router = this.$router.resolve({
-        path: '/personLibraryCreate'
-      })
-      window.open(router.href, '_blank')
-    },
-    storeChange(store) {
-      this.formData.storey = store
-      this.formData.mediaId = ''
-      this.formData.mediaBlockId = ''
-    },
-    typeChange(type) {
-      this.formData.mediaType = type
-      this.formData.mediaId = ''
-      this.formData.mediaBlockId = ''
-    },
-    mediaChange(mediaId) {
-      this.formData.mediaId = mediaId
-      this.formData.mediaBlockId = ''
-    },
-    blockChange(blockId) {
-      this.formData.mediaBlockId = blockId
-    },
-    rangeChange(range) {
-      this.formData.positionRange = range
-    },
-    parentChange(parentId) {
-      this.formData.positionParentId = parentId
-    },
-    positionChange(positionId) {
-      this.formData.positionId = positionId
     },
     getMediaPersonList() {
       Object.assign(this.formData, {
@@ -271,17 +209,12 @@ export default {
         size: this.pagination.pageSize
       })
       this.showLoading('加载中，请稍候...')
-      // axios.post('/media_repository/mediaPerson/selectPage', this.formData).then(res => {
-      //   this.loading.close()
-      //   if (res.data.code == '0') {
-      //     this.tableData = res.data.data.records
-      //     this.pagination.peopleCount = res.data.data.total
-      //   } else {
-      //     this.$message.error(res.data.msg)
-      //   }
-      // }).catch(err => {
-      //   this.loading.close()
-      // })
+      getMediaPersonList(this.formData).then(res => {
+        const { data } = res
+        this.tableData = data.records
+        this.pagination.peopleCount = data.total
+        this.loading.close()
+      })
     },
     togglePhone(index) {
       const phone = this.tableData[index].phone
@@ -297,11 +230,6 @@ export default {
         text: tips,
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
-      })
-    },
-    toPersonalLibrary() {
-      this.$router.push({
-        path: '/mediaMsg'
       })
     },
     showExportDialog() {
@@ -416,26 +344,12 @@ export default {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-  .switch-warper{
-    margin-bottom: 10px;
-    padding:0px 20px 0 14px;
-    border-bottom: solid 1px #d2d8e4;
-    position: relative;
-  }
-
-  .switch-warper .switch-box .btn{
-    padding-left: 30px;
-    padding-right: 30px;
-    border-radius: 6px 6px 0 0;
-    font-weight: 600;
-    border-bottom: none;
-  }
-
-  .switch-btn-group{
-    position: absolute;
-    right: 0px;
-    top:0px;
-  }
+<style lang="sass" scoped>
+  .tip
+    width: 80%
+    line-height: 24px
+    font-size: 12px
+    color: #f00
+    text-align: left
 </style>
+

@@ -188,7 +188,7 @@ export const asyncRoutes = [
   // componentsRouter,
   // chartsRouter,
   // nestedRouter,
-  tableRouter,
+  // tableRouter,
 
   // {
   //   path: '/example',
@@ -406,6 +406,13 @@ export const asyncRoutes = [
         component: () => import('@/views/mediaMsg/children/create'),
         name: 'mediaMsgCreate',
         meta: { title: '新建' },
+        hidden: true
+      },
+      {
+        path: 'edit',
+        component: () => import('@/views/mediaMsg/children/create'),
+        name: 'mediaMsgCreate',
+        meta: { title: '编辑' },
         hidden: true
       },
       {
