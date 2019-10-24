@@ -42,8 +42,12 @@ export function getInfo(token) {
 }
 
 export function logout() {
-  return request({
-    url: '/user/logout',
-    method: 'post'
-  })
+  // return request({
+  //   url: '/user/logout',
+  //   method: 'post'
+  // })
+  return {
+    roles: ['unify_admin'],
+    name: '统一平台 Admin'
+  }
 }

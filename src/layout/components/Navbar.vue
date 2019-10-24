@@ -75,8 +75,25 @@ export default {
       this.$store.dispatch('app/toggleSideBar')
     },
     async logout() {
+      const _status = await this.$confirm('此操作将会退出登录, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+
       await this.$store.dispatch('user/logout')
-      this.$router.push(`/login?redirect=${this.$route.fullPath}`)
+      this.$router.push({ path: `/login?redirect=${this.$route.fullPath}` })
+      // this.$confirm('此操作将会退出登录, 是否继续?', '提示', {
+      //   confirmButtonText: '确定',
+      //   cancelButtonText: '取消',
+      //   type: 'warning'
+      // }).then(() => {
+      //   window.sessionStorage.removeItem('access_token', '')
+      //   // this.$router.push({ path:`/login?redirect=${this.$route.fullPath}`})
+      //   this.$router.push({ path: this.redirect   || '/', query: this.otherQuery })
+      // }).catch(() => {
+      //   this.$message({type: 'info',message: '已取消'});
+      // });
     }
   }
 }

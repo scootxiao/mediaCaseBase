@@ -1,78 +1,69 @@
 <template>
-  <div class="table">
-    <div class="crumbs">
-      <el-breadcrumb separator="-">
-        <el-breadcrumb-item><i class="iconfont icon-shouye" /> 工作记录</el-breadcrumb-item>
-        <el-breadcrumb-item>我的接收</el-breadcrumb-item>
-        <el-breadcrumb-item>{{ receive.title }}</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
-    <div class="container">
-      <div class="handle-box">
+  <div class="app-container">
+    <div class="filter-container">
+      <el-form class="clearfix" :inline="true">
         <div class="title">{{ receive.title }}</div>
-        <div class="btn-group">
-          <el-button type="primary" @click="deleteReceive">删除</el-button>
-          <el-button type="primary" @click="toReceive">返回上层</el-button>
-        </div>
-      </div>
-      <div class="table-content">
-        <el-table
-          ref="singleTable"
-          border
-          :data="tableData"
-          style="width: 100%"
-          :span-method="spanMethod"
-          @selection-change="selectionChange"
-        >
-          <el-table-column type="selection" align="center" width="50" fixed />
-          <el-table-column property="title" align="left" label="标题">
-            <template slot-scope="scope">
-              <span style="cursor: pointer" @click="toDetail(scope.row.id)">{{ scope.row.title }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column property="mediaType" align="center" width="120px" label="媒体类型">
-            <template slot-scope="scope">
-              <span>{{ scope.row.mediaType | mediaTypeFT }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column property="mediaName" align="center" width="120px" label="媒体" />
-          <el-table-column
-            property="mediaPersonName"
-            align="center"
-            label="媒体人"
-            width="150px"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            property="createTime"
-            align="center"
-            label="接收时间"
-            width="180px"
-            show-overflow-tooltip
-          />
-        </el-table>
-      </div>
-    </div>
-    <div class="common-btns">
+        <el-button type="primary" class="filter-item" style="float:right;" @click="deleteReceive">删除</el-button>
+      </el-form>
+      <el-table
+        ref="singleTable"
+        border
+        :data="tableData"
+        style="width: 100%"
+        :span-method="spanMethod"
+        @selection-change="selectionChange"
+      >
+        <el-table-column type="selection" align="center" width="50" fixed />
+        <el-table-column property="title" align="left" label="标题">
+          <template slot-scope="scope">
+            <a href="#" @click="toDetail(scope.row.id)">{{ scope.row.title }}</a>
+          </template>
+        </el-table-column>
+        <el-table-column property="mediaType" align="center" width="120px" label="媒体类型">
+          <template slot-scope="scope">
+            <span>{{ scope.row.mediaType | mediaTypeFT }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column property="mediaName" align="center" width="120px" label="媒体" />
+        <el-table-column
+          property="mediaPersonName"
+          align="center"
+          label="媒体人"
+          width="150px"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          property="createTime"
+          align="center"
+          label="记录时间"
+          width="180px"
+          show-overflow-tooltip
+        />
+      </el-table>
       <el-pagination
+        v-if="showPage"
         :current-page="pagination.currentPage"
         :page-size="pagination.pageSize"
-        layout="total, prev, pager, next,jumper"
+        layout="slot, prev, pager, next,jumper"
         :total="pagination.peopleCount"
         @size-change="paginationSizeChange"
         @current-change="paginationCurrentChange"
-      />
+      >
+        <span style="color:#666; font-weight: normal; margin: 0 1em;">共{{ sendCount }}条</span>
+      </el-pagination>
     </div>
   </div>
 </template>
 
 <script>
-import 'static/css/mine.css'
 import MediaAPI from '@/api/mediaSettings.js'
-import axios from 'axios'
+import {
+  getRecordList
+} from '@/api/job'
+
 
 export default {
-  name: 'JobLogging',
+  name: 'receiveTable',
   filters: {
     mediaTypeFT(val) {
       return MediaAPI.parseMediaType(val)
@@ -85,8 +76,10 @@ export default {
         pageSize: 20,
         peopleCount: 0
       },
+      showPage: true,
       receive: {},
       tableData: [],
+      sendCount: 0,
       selectedData: [],
       spanArr: [],
       position: 0
@@ -99,11 +92,11 @@ export default {
   methods: {
     paginationSizeChange(value) {
       this.pagination.pageSize = value
-      this.getRecordList()
+      this.getRecordList('pager')
     },
     paginationCurrentChange(value) {
       this.pagination.currentPage = value
-      this.getRecordList()
+      this.getRecordList('pager')
     },
     rowspan() {
       this.spanArr = []
@@ -132,28 +125,34 @@ export default {
         }
       }
     },
-    getRecordList() {
+    async getRecordList(from) {
       if (!this.$route.query.id) {
         this.$message.error('ID不能为空')
         return
       }
+      if (from !== 'pager') {
+        this.showPage = false
+        this.pagination.currentPage = 1
+        this.$nextTick(() => {
+          this.showPage = true
+        })
+      }
       this.showLoading('加载中，请稍侯...')
-      axios.post(`/media_repository/workRecord/selectPageByReceiveId/${this.$route.query.id}`, {
+
+      let {code, msg, data} = await getRecordList(this.$route.query.id,{
         current: this.pagination.currentPage,
         size: this.pagination.pageSize
-      }).then(res => {
-        this.loading.close()
-        if (res.data.code == '0') {
-          this.receive = res.data.data.receive
-          this.tableData = res.data.data.recordPage.records
-          this.pagination.peopleCount = res.data.data.recordPage.total
-          this.rowspan()
-        } else {
-          this.$message.error(res.data.msg)
-        }
-      }).catch(err => {
-        this.loading.close()
-      })
+      });
+      if (code === '0') {
+        this.receive = data.receive
+        this.tableData = data.recordPage.records
+        this.sendCount = data.recordIdCount
+        this.pagination.peopleCount = data.recordPage.total
+        this.rowspan()
+      } else {
+        this.$message.error(msg)
+      }
+      this.loading.close();
     },
     selectionChange(selection) {
       this.selectedData = selection
@@ -166,35 +165,31 @@ export default {
       }
       await this.$confirm('您确定要删除勾选的数据吗？')
       this.showLoading('正在处理，请稍候...')
-      const id = this.receive.id
-      axios.get(`/media_repository/workRecord/deleteRecordUnderReceive?id=${id}&recordIds=${ids}`).then(res => {
-        this.loading.close()
-        if (res.data.code == '0') {
-          if (res.data.data == '0') {
-            this.$message.success('删除成功，该记录下的所有数据均已删除')
-            this.toReceive()
-          } else {
-            this.$message.success('删除成功')
-            this.getRecordList()
-          }
+      const id = this.receive.id;
+
+      let {code, msg, data} = await deleteReceive(this.receive.id, ids);
+      if (code == '0') {
+        if (data == '0') {
+          this.$message.success('删除成功，该记录下的所有数据均已删除')
+          this.toReceive()
         } else {
-          this.$message({
-            type: 'error',
-            message: this.data.msg
-          })
+          this.$message.success('删除成功')
+          this.getRecordList()
         }
-      }).catch(err => {
-        this.loading.close()
-      })
+      } else {
+        this.$message({type: 'error',message: msg})
+      }
+      this.loading.close()
     },
     toReceive() {
       this.$router.push({
-        path: '/jobLoggingReceive'
+        path: '/jobLogging/receive',
+        query: this.$route.query
       })
     },
     toDetail(id) {
       const route = this.$router.resolve({
-        path: '/jobLoggingCheckRecord',
+        path: '/jobLogging/check',
         query: {
           recordId: id
         }
@@ -241,11 +236,6 @@ export default {
         white-space: nowrap;
         text-overflow: ellipsis;
         overflow: hidden;
-    }
-
-    .btn-group {
-        position: absolute;
-        top: 15px;
-        right: 20px;
+        float: left;
     }
 </style>

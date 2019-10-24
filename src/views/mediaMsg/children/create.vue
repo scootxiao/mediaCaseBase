@@ -399,7 +399,7 @@ export default {
     },
     async saveOrUpdate() {
       await this.$confirm('您确定要保存修改吗？')
-      
+
       const otherChargers = []
       this.otherChargers.forEach(id => {
         const index = this.userList.findIndex(item => item.id == id)
@@ -414,11 +414,11 @@ export default {
       })
       this.showLoading('处理中，请稍候...')
 
-      const { code, msg} = await saveOrUpdate({
+      const { code, msg } = await saveOrUpdate({
         person: this.formData,
         otherChargers,
         personBlocks
-      });
+      })
       if (code == '0') {
         this.disableSave = true
         this.$message.success('保存成功')

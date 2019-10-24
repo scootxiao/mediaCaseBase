@@ -423,24 +423,65 @@ export const asyncRoutes = [
         hidden: true
       }
     ]
-
-    //   path: '/table',
-    // component: Layout,
-    // redirect: '/table/complex-table',
-    // name: 'Table',
-    // meta: {
-    //   title: 'Table',
-    //   icon: 'table'
-    // },
-    // children: [
-    //   {
-    //     path: 'dynamic-table',
-    //     component: () => import('@/views/table/dynamic-table/index'),
-    //     name: 'DynamicTable',
-    //     meta: { title: 'Dynamic Table' }
-    //   },
-
   },
+  {
+    path: '/jobLogging',
+    component: Layout,
+    redirect: '/jobLogging/index',
+    meta: { title: '工作记录', icon: 'tab' },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/jobLogging/index'),
+        name: 'JLindex',
+        meta: { title: '我的记录' }
+      },
+      {
+        path: 'receive',
+        component: () => import('@/views/jobLogging/receive'),
+        name: 'JLreceive',
+        meta: { title: '我的接收' }
+      },
+      {
+        path: 'append',
+        component: () => import('@/views/jobLogging/children/append'),
+        name: 'JLappend',
+        meta: { title: '添加记录' },
+        hidden: true
+      },
+      {
+        path: 'receiveTable',
+        component: () => import('@/views/jobLogging/children/receiveTable'),
+        name: 'JLreceiveTable',
+        meta: { title: '接收详情' },
+        hidden: true
+      },
+      {
+        path: 'check',
+        component: () => import('@/views/jobLogging/children/check'),
+        name: 'JLcheck',
+        meta: { title: '查看' },
+        hidden: true
+      }
+    ]
+  },
+
+  //   path: '/table',
+  // component: Layout,
+  // redirect: '/table/complex-table',
+  // name: 'Table',
+  // meta: {
+  //   title: 'Table',
+  //   icon: 'table'
+  // },
+  // children: [
+  //   {
+  //     path: 'dynamic-table',
+  //     component: () => import('@/views/table/dynamic-table/index'),
+  //     name: 'DynamicTable',
+  //     meta: { title: 'Dynamic Table' }
+  //   },
+
   // {
   //   path: '/jobLogging',
   //   component: Layout,

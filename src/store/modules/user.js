@@ -52,15 +52,16 @@ const actions = {
   login({ commit }, userInfo) {
     const { username, password, code, key } = userInfo
     return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password, code: code.trim(), key: key }).then(response => {
-        const data = response.data.data
-        console.log('response:', data)
-        commit('SET_TOKEN', data.access_token)
-        setToken(data.access_token)
-        resolve()
-      }).catch(error => {
-        reject(error)
-      })
+      login({ username: username.trim(), password: password, code: code.trim(), key: key })
+        .then(response => {
+          const data = response.data.data
+          console.log('response:', data)
+          commit('SET_TOKEN', data.access_token)
+          setToken(data.access_token)
+          resolve()
+        }).catch(error => {
+          reject(error)
+        })
     })
   },
 
@@ -102,15 +103,21 @@ const actions = {
   // user logout
   logout({ commit, state }) {
     return new Promise((resolve, reject) => {
-      // logout(state.token).then(() => {
+      // logout(state.token)
+      //   .then(() => {
+      //     commit('SET_TOKEN', '')
+      //     commit('SET_ROLES', [])
+      //     removeToken()
+      //     resetRouter()
+      //     resolve()
+      //   }).catch(error => {
+      //     reject(error)
+      //   })
+      logout()
       commit('SET_TOKEN', '')
       commit('SET_ROLES', [])
       removeToken()
       resetRouter()
-      // resolve()
-      // }).catch(error => {
-      //   reject(error)
-      // })
     })
   },
 
